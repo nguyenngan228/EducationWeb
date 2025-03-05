@@ -1,0 +1,76 @@
+{
+  "name": "eduwebapp",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.6.0",
+    "@fortawesome/fontawesome-svg-core": "^6.6.0",
+    "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@fortawesome/react-fontawesome": "^0.2.2",
+    "@radix-ui/react-dialog": "^1.1.1",
+    "@react-oauth/google": "^0.12.1",
+    "@stripe/react-stripe-js": "^2.8.0",
+    "@stripe/stripe-js": "^4.3.0",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.7.3",
+    "bootstrap": "^5.3.3",
+    "canvas-confetti": "^1.9.3",
+    "chart.js": "^4.4.3",
+    "class-variance-authority": "^0.7.0",
+    "classnames": "^2.5.1",
+    "cloudinary-react": "^1.8.1",
+    "clsx": "^2.1.1",
+    "i18next": "^23.14.0",
+    "i18next-browser-languagedetector": "^8.0.0",
+    "i18next-http-backend": "^2.6.1",
+    "lucide-react": "^0.424.0",
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.4",
+    "react-cookies": "^0.1.1",
+    "react-dom": "^18.3.1",
+    "react-feather": "^2.0.10",
+    "react-google-multi-lang": "^1.0.6",
+    "react-hot-toast": "^2.4.1",
+    "react-i18next": "^15.0.1",
+    "react-icons": "^5.2.1",
+    "react-quill": "^2.0.0",
+    "react-router-dom": "^6.26.0",
+    "react-scripts": "5.0.1",
+    "shadcn-ui": "^0.8.0",
+    "styled-components": "^6.1.12",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss-animate": "^1.0.7",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.11"
+  }
+}

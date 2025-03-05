@@ -1,0 +1,19 @@
+.login-card {
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.form-label {
+  font-weight: bold;
+}
+.google-login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+}

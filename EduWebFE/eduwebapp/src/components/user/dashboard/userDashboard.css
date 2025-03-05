@@ -1,0 +1,74 @@
+body,
+html {
+  /* overflow-x: hidden;  */
+}
+
+.categories-container {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  white-space: nowrap;
+  overflow: auto;
+}
+
+.category-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.category-item:hover {
+  border-color: #007bff;
+}
+
+.category-icon {
+  margin-right: 8px;
+  font-size: 12px;
+}
+
+.category-name {
+  font-weight: 500;
+}
+/* dashboard.css */
+.search-container {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd; /* Đường viền xung quanh */
+  border-radius: 9999px; /* Góc bo tròn */
+  background-color: #f1f1f1; /* Màu nền */
+  padding: 4px; /* Khoảng cách bên trong */
+  height: 32px; /* Chiều cao nhỏ */
+}
+
+.search-input {
+  flex: 1; /* Để input chiếm toàn bộ chiều rộng còn lại */
+  background-color: transparent; /* Nền trong suốt */
+  border: none; /* Không có đường viền */
+  outline: none; /* Không có đường viền khi focus */
+  padding: 0 8px; /* Khoảng cách bên trong */
+  height: 100%; /* Để input chiếm toàn bộ chiều cao của container */
+}
+
+.search-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%; /* Để button chiếm toàn bộ chiều cao của container */
+  background-color: transparent; /* Màu nền của button */
+  border: none; /* Không có đường viền */
+  border-radius: 9999px; /* Góc bo tròn */
+  padding: 0 12px; /* Khoảng cách bên trong */
+  cursor: pointer; /* Con trỏ khi hover */
+}
+
+.search-button:hover {
+  background-color: #d0d0d0; /* Màu nền khi hover */
+}
+.category-item.selected {
+  border-color: #007bff;
+}

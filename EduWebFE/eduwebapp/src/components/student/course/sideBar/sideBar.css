@@ -1,0 +1,66 @@
+.sidebar {
+  width: 200px;
+  height: 100%;
+  padding: 0;
+  border-right: 1px solid #ddd;
+}
+
+.sidebar h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.lock-icon {
+  margin-right: 10px;
+  font-size: 5px;
+}
+
+.course-item span {
+  font-size: 16px;
+}
+
+.course-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.course-item:hover {
+  background-color: #f0f0f0;
+  color: gray;
+}
+.completed-text {
+  color: #13803c;
+  font-weight: bold;
+}
+
+.sidebar-head {
+  /* background-color: #7a4141; */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 4px;
+}
+
+.chapter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  color: #666666;
+}
+
+.chapter:hover {
+  background-color: rgba(117, 117, 117, 0.1);
+  cursor: pointer;
+  color: #000;
+}
+
+.back,
+.back span {
+  color: var(--primary-color);
+  font-weight: 500;
+}

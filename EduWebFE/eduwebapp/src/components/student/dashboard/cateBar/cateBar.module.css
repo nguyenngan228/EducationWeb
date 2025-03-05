@@ -1,0 +1,39 @@
+.main {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.container {
+  overflow-x: scroll;
+  display: flex;
+  gap: 15px;
+  white-space: nowrap;
+  margin-bottom: 30px;
+}
+
+.container::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  padding: 8px 16px;
+  max-width: 100%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.item:hover {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+.title {
+  font-weight: 400;
+}
+
+.item.selected {
+  color: #fff;
+  background-color: var(--primary-color);
+}

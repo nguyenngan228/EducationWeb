@@ -1,0 +1,27 @@
+.custom-select {
+    width: 200px; /* Điều chỉnh kích thước theo ý muốn */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    appearance: none; /* Loại bỏ style mặc định của trình duyệt */
+    -webkit-appearance: none; /* Dành cho Safari và Chrome */
+    -moz-appearance: none; /* Dành cho Firefox */
+  }
+  
+  .custom-select:focus {
+    border-color: #007bff;
+    outline: none;
+  }
+  
+  .custom-select-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  
+  
+  
+  .custom-select option {
+    padding: 10px;
+  }

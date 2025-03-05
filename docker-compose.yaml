@@ -1,0 +1,67 @@
+
+  # volume, blide mount
+services:
+  db:
+    image: mysql:8.0
+    container_name: education_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root  # Mật khẩu của user "root"
+      MYSQL_DATABASE: eduwebdb   # Tạo database mặc định
+      MYSQL_USER: eduweb_user    # Tạo user mới
+      MYSQL_PASSWORD: '12345678' # Mật khẩu cho user mới
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:6
+    container_name: education_redis
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ./EduWeb/educationweb
+      dockerfile: Dockerfile
+    container_name: education_web
+    restart: always
+    depends_on:
+      - db
+      - redis
+    env_file: .env
+    environment:
+      DB_NAME: eduwebdb
+      DB_USER: eduweb_user
+      DB_PASSWORD: '12345678'
+      DB_HOST: db
+      DB_PORT: 3306
+    volumes:
+      - ./EduWeb/educationweb:/app
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+  
+  frontend:
+    build:
+      context: ./EduWebFE/eduwebapp
+      dockerfile: Dockerfile
+    container_name: education_web_fe
+    restart: always
+    depends_on:
+      - backend
+    volumes:
+      - ./EduWeb/eduwebapp:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    stdin_open: true
+    tty: true
+    environment:
+      REACT_APP_BACKEND_URL: http://localhost:8000
+
+volumes:
+  mysql_data:

@@ -1,0 +1,72 @@
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  height: 60px;
+  background-color: #fff;
+}
+
+.logo {
+  font-size: 1.6rem;
+  width: 150px;
+  height: auto;
+}
+
+.wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -3px;
+  font-size: 0.8rem;
+  background-color: #df1111;
+  color: #fff;
+  border-radius: 50px;
+  padding: 2px 6px;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50px;
+  border: 1px solid #ccc;
+  object-fit: contain;
+}
+
+.accountName {
+  display: flex;
+  flex-direction: column;
+  color: #000;
+}
+
+.fullname {
+  font-weight: 500;
+  font-size: 1.4rem;
+  line-height: 1.6rem;
+}
+
+.username {
+  font-size: 1.2rem;
+  text-align: start;
+  line-height: 1.4rem;
+}
+
+.navLeft {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6rem;
+}

@@ -1,0 +1,12 @@
+.modal-body {
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.modal-body h4 {
+  margin-top: 15px;
+}
+
+button {
+  /* margin-top: 20px; */
+}

@@ -1,0 +1,135 @@
+.chapter-editor {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.customize-header {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.chapter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.chapter-section {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.chapter-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.edit-title {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+}
+
+.chapter-video {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 80%;
+    background-color: #e9e9f1;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.add-video {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.video-preview {
+    margin-top: 10px;
+}
+
+.video-upload {
+    display: none;
+}
+
+.full-width {
+    grid-column: 1 / -1;
+}
+
+.chapter-description .ql-container {
+    height: 150px;
+    background: white;
+}
+
+.cancel, .save-button {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.cancel {
+    background-color: #ccc;
+    color: #333;
+}
+
+.save-button {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.access-settings {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.edit-access {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+}
+.chapter-video {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.chapter-video span {
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+.video-preview {
+    margin-top: 10px;
+}
+.access-settings {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#free-preview-checkbox {
+    margin-right: 8px;
+}

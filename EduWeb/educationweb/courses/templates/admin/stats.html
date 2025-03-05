@@ -1,0 +1,187 @@
+{% extends 'admin/base_site.html' %}
+{% block content %}
+<h1 style="text-align: center; font-weight: bold;font-size:50px">Course Statistics</h1>
+<canvas id="course_cate"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let cateLabels = [];
+    let cateValues = [];
+    {% for c in stats %}
+    cateValues.push({{ c.count }})
+    cateLabels.push('{{ c.title }}')
+    {% endfor %}
+
+    let soldLabels = [];
+    let soldValues = [];
+    {% for c in sold %}
+    soldValues.push({{ c.count }})
+    soldLabels.push('{{ c.title }}')
+    {% endfor %}
+
+    // Biểu đồ theo tháng
+    let monthLabels = [];
+    let monthValues = [];
+    {% for c in month %}
+    monthValues.push({{ c.count }})
+    monthLabels.push('{{ c.month|date:"F Y" }}')  // Format theo tháng
+    {% endfor %}
+
+    // Biểu đồ theo quý
+    let quarterLabels = [];
+    let quarterValues = [];
+    {% for c in quarter %}
+    quarterValues.push({{ c.count }})
+    quarterLabels.push('Q{{ c.quarter|date:"Q" }} {{ c.quarter|date:"Y" }}')  // Format theo quý
+    {% endfor %}
+
+    // Biểu đồ theo năm
+    let yearLabels = [];
+    let yearValues = [];
+    {% for c in year %}
+    yearValues.push({{ c.count }})
+    yearLabels.push('{{ c.year }}')  // Năm
+    {% endfor %}
+
+    window.onload = () => {
+        // Biểu đồ thể hiện số lượng khóa học theo thể loại
+        const cateCtx = document.getElementById('course_cate');
+        new Chart(cateCtx, {
+            type: 'bar',
+            data: {
+                labels: cateLabels,
+                datasets: [{
+                    label: 'Quantity',
+                    data: cateValues,
+                    borderWidth: 1,
+                    backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 205, 86)'
+                    ],
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Biểu đồ số lượng khóa học đã bán
+        const soldCtx = document.getElementById('course_sold');
+        new Chart(soldCtx, {
+            type: 'bar',
+            data: {
+                labels: soldLabels,
+                datasets: [{
+                    label: 'Sold Quantity',
+                    data: soldValues,
+                    borderWidth: 1,
+                    backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 205, 86)'
+                    ],
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Biểu đồ theo tháng
+        const monthCtx = document.getElementById('course_month');
+        new Chart(monthCtx, {
+            type: 'bar',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Sold Quantity by Month',
+                    data: monthValues,
+                    borderWidth: 1,
+                    backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 205, 86)'
+                    ],
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Biểu đồ theo quý
+        const quarterCtx = document.getElementById('course_quarter');
+        new Chart(quarterCtx, {
+            type: 'bar',
+            data: {
+                labels: quarterLabels,
+                datasets: [{
+                    label: 'Sold Quantity by Quarter',
+                    data: quarterValues,
+                    borderWidth: 1,
+                    backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 205, 86)'
+                    ],
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Biểu đồ theo năm
+        const yearCtx = document.getElementById('course_year');
+        new Chart(yearCtx, {
+            type: 'bar',
+            data: {
+                labels: yearLabels,
+                datasets: [{
+                    label: 'Sold Quantity by Year',
+                    data: yearValues,
+                    borderWidth: 1,
+                    backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 205, 86)'
+                    ],
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+<h1 style="text-align: center; font-weight: bold; font-size:50px">Courses Sold Statistics</h1>
+<canvas id="course_sold"></canvas>
+<h1 style="text-align: center; font-weight: bold; font-size:50px">Number of courses sold per month</h1>
+<canvas id="course_month"></canvas>
+<h1 style="text-align: center; font-weight: bold; font-size:50px">Number of courses sold per quarter</h1>
+<canvas id="course_quarter"></canvas>
+<h1 style="text-align: center; font-weight: bold; font-size:50px">Number of courses sold per year</h1>
+<canvas id="course_year"></canvas>
+{% endblock %}

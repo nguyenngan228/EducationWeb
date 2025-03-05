@@ -1,0 +1,25 @@
+.course-status-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.course-status {
+    display: flex;
+    align-items: center;
+    margin: 20px;
+    border: 1px solid #e0e0e0;
+    width: 50%;
+    height: 70px;
+}
+
+
+.course-status .status-info h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.course-status .status-info p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 14px;
+}

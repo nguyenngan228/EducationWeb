@@ -1,0 +1,42 @@
+/* dashboard.css */
+.search-container {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd; /* Đường viền xung quanh */
+  border-radius: 9999px; /* Góc bo tròn */
+  background-color: #f1f1f1; /* Màu nền */
+  padding: 4px; /* Khoảng cách bên trong */
+  height: 32px; /* Chiều cao nhỏ */
+}
+
+.search-input {
+  flex: 1; /* Để input chiếm toàn bộ chiều rộng còn lại */
+  background-color: transparent; /* Nền trong suốt */
+  border: none; /* Không có đường viền */
+  outline: none; /* Không có đường viền khi focus */
+  padding: 0 8px; /* Khoảng cách bên trong */
+  height: 100%; /* Để input chiếm toàn bộ chiều cao của container */
+}
+
+.search-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%; /* Để button chiếm toàn bộ chiều cao của container */
+  background-color: transparent; /* Màu nền của button */
+  border: none; /* Không có đường viền */
+  border-radius: 9999px; /* Góc bo tròn */
+  padding: 0 12px; /* Khoảng cách bên trong */
+  cursor: pointer; /* Con trỏ khi hover */
+}
+
+.search-button:hover {
+  background-color: #d0d0d0; /* Màu nền khi hover */
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+}
