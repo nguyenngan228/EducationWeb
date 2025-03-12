@@ -179,7 +179,7 @@ class UserCourseViewSet(viewsets.ViewSet, generics.ListAPIView):
         return response
 
 
-@method_decorator(cache_page(30), name='list')
+@method_decorator(cache_page(60), name='list')
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
     queryset = Category.objects.all()
     serializer_class = serializers.CategorySerializer
@@ -189,19 +189,33 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
     serializer_class = serializers.CourseSerializer
     pagination_class = paginators.CoursePaginator
     permission_classes = [permissions.IsAuthenticated]
-
+    print("Toi day roi nene")
     def get_queryset(self):
-        queryset = Course.objects.all()
-        if self.action == 'list':
-            if not self.request.query_params.get('create_chapter'):
-                queryset = queryset.filter(publish=True)
-        q = self.request.query_params.get("q")
-        if q:
-            queryset = queryset.filter(title__icontains=q)
-        cate_id = self.request.query_params.get('category_id')
-        if cate_id:
-            queryset = queryset.filter(category_id=cate_id)
-        queryset = queryset.order_by('id')
+        print("cache key")
+        cache_key = "courses_list"
+        print("cache key",cache_key)
+        queryset = None
+        # cached_courses = cache.get(cache_key)
+
+        # if cached_courses:
+        #     queryset = list(deserialize('json', cached_courses))
+        #     return queryset
+
+        # queryset = Course.objects.all()
+        # if self.action == 'list':
+        #     if not self.request.query_params.get('create_chapter'):
+        #         queryset = queryset.filter(publish=True)
+
+        # q = self.request.query_params.get("q")
+        # if q:
+        #     queryset = queryset.filter(title__icontains=q)
+
+        # cate_id = self.request.query_params.get('category_id')
+        # if cate_id:
+        #     queryset = queryset.filter(category_id=cate_id).order_by('id')
+        #     serialized_data = serialize('json', queryset)
+        #     cache.set(cache_key, serialized_data, timeout=60*2)
+
         return queryset
 
     def create(self, request, *args, **kwargs):
@@ -727,17 +741,6 @@ class PurchaseViewSet(viewsets.ModelViewSet):
 class GeminiChatViewSet(viewsets.GenericViewSet):
     genai.configure(api_key=config('GEMINI_API_KEY'))
 
-    # model = genai.GenerativeModel(
-    #     model_name="gemini-2.0-flash",
-    #     generation_config={
-    #         "temperature": 0,
-    #         "top_p": 0.95,
-    #         "top_k": 40,
-    #         "max_output_tokens": 8192,
-    #         "response_mime_type": "text/plain",
-    #     },
-    # )
-
     @action(methods=['POST'], detail=False, url_path='chatgemini', serializer_class=serializers.GeminiChatSerializer)
     def chat_gemini(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -807,74 +810,77 @@ def handle_checkout_session(session):
     )
 
 
-# products_df = pd.read_csv('courses.csv')
-#
-# print(products_df)
-#
-# # Xây dựng vector đặc trưng TF-IDF từ tên sản phẩm
-# tfidf_vectorizer = TfidfVectorizer(stop_words='english', norm='l2')
-# tfidf_matrix = tfidf_vectorizer.fit_transform(products_df['title'])
-# print("Ma trận TF-IDF (đã chuyển thành dạng array):")
-# print(tfidf_matrix.toarray())
-#
-# # Sử dụng cosine similarity để tính độ tương tự giữa các sản phẩm
-# cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
-# print("\nMa trận Cosine Similarity (5 sản phẩm đầu tiên):")
-# print(cosine_sim[:5, :5])  # In ra ma trận tương tự cho 5 sản phẩm đầu tiên
-#
-# class RecommenViewset(viewsets.ViewSet, generics.ListAPIView):
-#     serializer_class = serializers.UserCourseSerializer
-#     pagination_class = paginators.RecommendCoursePaginator
-#
-#     @action(methods=['post'], detail=False, permission_classes=[permissions.IsAuthenticated])
-#     def course_recommend(self, request):
-#         try:
-#             data = request.data
-#             product_id = data.get('product_id')
-#
-#             if not product_id or not str(product_id).isdigit():
-#                 return Response({'error': 'Thiếu thông tin sản phẩm hoặc ID không hợp lệ'},
-#                                 status=status.HTTP_400_BAD_REQUEST)
-#
-#             product_id = int(product_id)
-#
-#             # Tìm chỉ mục của sản phẩm tương ứng với product_id
-#             product_index = products_df[products_df['id'] == product_id].index
-#
-#             if product_index.empty:
-#                 return Response({'error': 'Không tìm thấy sản phẩm'}, status=status.HTTP_404_NOT_FOUND)
-#
-#             product_index = product_index[0]  # Lấy chỉ mục đầu tiên
-#
-#
-#             similar_scores = list(enumerate(cosine_sim[product_index]))
-#             similar_scores = sorted(similar_scores, key=lambda x: x[1], reverse=True)
-#             similar_scores = [score for score in similar_scores if score[1] > 0 and products_df.iloc[score[0]]['id'] != product_id]  # Thử lấy 7 sản phẩm tương tự nhất
-#             if len(similar_scores) == 0.0:
-#                 # Nếu không có sản phẩm tương tự, lấy sản phẩm trong cùng danh mục
-#                 category_title = products_df.iloc[product_index]['category__title']
-#                 same_category_products = products_df[products_df['category__title'] == category_title]
-#                 recommended_products = same_category_products['id'].tolist()
-#
-#                 return Response({'recommended_products': recommended_products})
-#
-#             product_indices = [i[0] for i in similar_scores]
-#
-#
-#             # Trả về danh sách các sản phẩm tương tự
-#             recommended_products = products_df.loc[product_indices, ['id', 'title']]
-#             recommended_products_ids = products_df.loc[product_indices, 'id'].tolist()
-#
-#             # Kiểm tra kiểu dữ liệu id để đảm bảo là số nguyên
-#             recommended_products_ids = [int(id) for id in recommended_products_ids]
-#
-#             queryset = Course.objects.filter(id__in=recommended_products_ids)
-#
-#             # Sử dụng UserCourseSerializer để tuần tự hóa các sản phẩm
-#             serializer = self.get_serializer(queryset, many=True)
-#
-#             # Trả về danh sách các sản phẩm đã được tuần tự hóa
-#             return Response(serializer.data)
-#
-#         except Exception as e:
-#             return Response({'error': 'Có lỗi xảy ra: ' + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+products_df = pd.read_csv('courses.csv')
+
+print(products_df)
+
+# Xây dựng vector đặc trưng TF-IDF từ tên sản phẩm
+tfidf_vectorizer = TfidfVectorizer(stop_words='english', norm='l2')
+tfidf_matrix = tfidf_vectorizer.fit_transform(products_df['title'])
+print("Ma trận TF-IDF (đã chuyển thành dạng array):")
+print(tfidf_matrix.toarray())
+
+# Sử dụng cosine similarity để tính độ tương tự giữa các sản phẩm
+cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
+print("\nMa trận Cosine Similarity (5 sản phẩm đầu tiên):")
+print(cosine_sim[:5, :5])  # In ra ma trận tương tự cho 5 sản phẩm đầu tiên
+
+class RecommenViewset(viewsets.ViewSet, generics.ListAPIView):
+    serializer_class = serializers.UserCourseSerializer
+    pagination_class = paginators.RecommendCoursePaginator
+
+    @action(methods=['post'], detail=False, permission_classes=[permissions.IsAuthenticated])
+    def course_recommend(self, request):
+        try:
+            data = request.data
+            product_id = data.get('product_id')
+
+            if not product_id or not str(product_id).isdigit():
+                return Response({'error': 'Thiếu thông tin sản phẩm hoặc ID không hợp lệ'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            product_id = int(product_id)
+            print(product_id)
+
+            # Tìm chỉ mục của sản phẩm tương ứng với product_id
+            product_index = products_df[products_df['id'] == product_id].index
+
+            if product_index.empty:
+                return Response({'error': 'Không tìm thấy sản phẩm'}, status=status.HTTP_404_NOT_FOUND)
+
+            product_index = product_index[0]  # Lấy chỉ mục đầu tiên
+
+
+            similar_scores = list(enumerate(cosine_sim[product_index]))
+            similar_scores = sorted(similar_scores, key=lambda x: x[1], reverse=True)
+            similar_scores = [score for score in similar_scores if score[1] > 0 and products_df.iloc[score[0]]['id'] != product_id]  # Thử lấy 7 sản phẩm tương tự nhất
+            if len(similar_scores) == 0.0:
+                # Nếu không có sản phẩm tương tự, lấy sản phẩm trong cùng danh mục
+                category_title = products_df.iloc[product_index]['category__title']
+                same_category_products = products_df[(products_df['category__title'] == category_title) & (products_df['id'] != product_id)]
+                recommended_products = same_category_products['id'].tolist()
+
+                queryset = Course.objects.filter(id__in=recommended_products)
+                serializer = self.get_serializer(queryset, many=True)
+                return Response(serializer.data)
+
+            product_indices = [i[0] for i in similar_scores]
+
+
+            # Trả về danh sách các sản phẩm tương tự
+            recommended_products = products_df.loc[product_indices, ['id', 'title']]
+            recommended_products_ids = products_df.loc[product_indices, 'id'].tolist()
+
+            # Kiểm tra kiểu dữ liệu id để đảm bảo là số nguyên
+            recommended_products_ids = [int(id) for id in recommended_products_ids]
+
+            queryset = Course.objects.filter(id__in=recommended_products_ids)
+
+            # Sử dụng UserCourseSerializer để tuần tự hóa các sản phẩm
+            serializer = self.get_serializer(queryset, many=True)
+
+            # Trả về danh sách các sản phẩm đã được tuần tự hóa
+            return Response(serializer.data)
+
+        except Exception as e:
+            return Response({'error': 'Có lỗi xảy ra: ' + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

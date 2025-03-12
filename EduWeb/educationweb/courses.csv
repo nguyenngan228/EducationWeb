@@ -1,0 +1,21 @@
+id,title,category__title,price
+1,Yoga basic,Health & Fitness,210
+2,Design for beginner,Design,50
+3,Online Advertising,Marketing,99
+4,Health care,Health & Fitness,230
+9,Music Production for Beginners,Music,40
+10,Fitness Training for Beginners,Health & Fitness,60
+13,Full-Stack Developer Bootcamp,Development,199
+14,Mastering Microsoft Office,Office Productivity,120
+24,Building APIs with Django,Development,123
+25,Google Workspace for Professionals,Office Productivity,129
+28,Adobe Photoshop Essentials,Design,299
+29,Cloud Computing with AWS,Development,129
+30,Content Marketing Strategy,Marketing,199
+31,Investment Strategies for Beginners,Finace & Accounting,100
+33,Flutter for beginner,IT & Software,129
+35,Ruby,IT & Software,200
+36,Test web,IT & Software,229
+40,Independent,Personal Development,1000
+41,Odoo Development,IT & Software,1000
+43,Cloud Computing,IT & Software,1000

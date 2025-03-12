@@ -12,11 +12,11 @@ const StyledLink = styled(Link)`
   padding: 0.5rem 1.5rem;
   transition: background-color 0.3s, color 0.3s;
   text-decoration: none;
-  background-color: ${props => props.active ? 'rgba(14, 165, 233, 0.2)' : 'transparent'};
-  color: ${props => props.active ? '#0ea5e9' : '#64748b'}; 
+  background-color: ${props => props.$active ? 'rgba(14, 165, 233, 0.2)' : 'transparent'};
+  color: ${props => props.$active ? '#0ea5e9' : '#64748b'};
 
   &:hover {
-    background-color: #e2e8f0; 
+    background-color: #e2e8f0;
     color: #0ea5e9;
 
     .icon {
@@ -24,8 +24,8 @@ const StyledLink = styled(Link)`
     }
   }
 
-  ${props => props.active && css`
-    background-color: rgba(14, 165, 233, 0.2); 
+  ${props => props.$active && css`
+    background-color: rgba(14, 165, 233, 0.2);
     color: #0ea5e9;
 
     .icon {
@@ -35,7 +35,7 @@ const StyledLink = styled(Link)`
 `;
 
 const IconWrapper = styled.div`
-  color: ${props => props.active ? '#0ea5e9' : '#64748b'}; 
+  color: ${props => props.$active ? '#0ea5e9' : '#64748b'}; 
   transition: color 0.3s;
 
   .icon {
@@ -43,22 +43,23 @@ const IconWrapper = styled.div`
   }
 `;
 
-export const SidebarItem = ({ icon: Icon, label, href }) => {
-    const { pathname } = useLocation();
-    const isActive =  pathname.includes(href)
 
-    return (
-        <StyledLink to={href} active={isActive}>
-            <IconWrapper active={isActive}>
-                <Icon size={22} className="icon" />
-            </IconWrapper>
-            {label}
-        </StyledLink>
-    );
+export const SidebarItem = ({ icon: Icon, label, href }) => {
+  const { pathname } = useLocation();
+  const isActive = pathname.includes(href)
+
+  return (
+    <StyledLink to={href} $active={isActive}>
+      <IconWrapper $active={isActive}>
+        <Icon size={22} className="icon" />
+      </IconWrapper>
+      {label}
+    </StyledLink>
+  );
 }
 
 SidebarItem.propTypes = {
-    icon: PropTypes.elementType.isRequired,
-    label: PropTypes.string.isRequired,
-    href: PropTypes.string.isRequired,
+  icon: PropTypes.elementType.isRequired,
+  label: PropTypes.string.isRequired,
+  href: PropTypes.string.isRequired,
 };

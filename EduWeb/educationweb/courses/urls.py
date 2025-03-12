@@ -23,7 +23,7 @@ router.register('question',views.QuizQuestionViewSet, basename='question')
 router.register('answer',views.QuizAnswerViewSet, basename='answer')
 router.register('googleauth', views.GoogleLoginViewSet, basename='googleauth'),
 router.register('usercourse', views.UserCourseViewSet, basename='usercourse'),
-# router.register('recommend',views.RecommenViewset,basename='recommend')
+router.register('recommend',views.RecommenViewset,basename='recommend')
 router.register('geminichat',views.GeminiChatViewSet,basename='geminichat')
 
 

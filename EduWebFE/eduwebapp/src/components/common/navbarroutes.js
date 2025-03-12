@@ -53,10 +53,10 @@ const NavbarRoutes = () => {
         <div className="flex flex-col w-full">
             <ul className="flex gap-8 m-0 p-0">
                 {guestRoutes.map((route) => (
-                    <li>
+                    <li key={route.href}>
                         <Link
                             className="no-underline text-slate-950 font-normal"
-                            key={route.href}
+                            
                             to={route.href}
                         >
                             {route.label}

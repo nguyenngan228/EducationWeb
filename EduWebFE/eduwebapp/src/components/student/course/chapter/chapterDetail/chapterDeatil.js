@@ -7,6 +7,7 @@ import { Button, Modal, Offcanvas } from 'react-bootstrap';
 import mycontext from "../../../../../configs/mycontext";
 import { ChapterProgressButton } from "../chapterProgressButton/chapterProgressButton";
 import confetti from 'canvas-confetti';
+import GeminiChat from "../../../chatGemini/chatGemini";
 
 
 export const ChapterDetail = () => {
@@ -265,6 +266,7 @@ export const ChapterDetail = () => {
                 )}
                 
             </div>
+            <GeminiChat/>
         </div>
     )
 };

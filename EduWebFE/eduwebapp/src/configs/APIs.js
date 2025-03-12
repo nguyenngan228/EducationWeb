@@ -43,6 +43,7 @@ export const endpoints = {
   add_question: (id) => `chapters/${id}/add_question/`,
   course_unauth: (kw) => `usercourse/${kw}`,
   rec_course: 'recommend/course_recommend/',
+  chat_gemeni: 'geminichat/chatgemini/',
 
 };
 export default axios.create({

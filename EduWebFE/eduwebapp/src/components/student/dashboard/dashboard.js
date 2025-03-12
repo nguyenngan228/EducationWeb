@@ -39,17 +39,21 @@ export const StudentDashBoard = () => {
       let res = await authAPI().get(endpoints["courses"](url));
       setCourses(res.data.results);
       setTotalPages(Math.ceil(res.data.count / 10));
+      console.log(res.data.results);
     } catch (ex) {
       console.error(ex);
     } finally {
       setLoading(false);
     }
   };
-
   useEffect(() => {
-    loadCate();
-    loadCourses(cateId, searchTerm, page);
-  }, [cateId, searchTerm, page]);
+    loadCate(); // Load danh mục
+    loadCourses(); // Load khóa học ban đầu
+  }, []);
+  
+
+
+ 
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://chatling.ai/js/embed.js";
@@ -65,6 +69,7 @@ export const StudentDashBoard = () => {
       document.body.removeChild(script);
     };
   }, []);
+  
 
   const handleSelectCate = (cateId) => {
     if (selectedCategory === cateId) {

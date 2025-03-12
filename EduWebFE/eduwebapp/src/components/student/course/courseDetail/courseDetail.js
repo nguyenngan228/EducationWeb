@@ -39,7 +39,6 @@ export const CourseDetail = () => {
         "product_id": id
       })
       setRecCourse(res.data)
-      // setTotalPagesRec(Math.ceil(res.data.count / 4));
     } catch (ex) {
       console.error(ex)
     } finally {
@@ -277,13 +276,13 @@ export const CourseDetail = () => {
             <div className="text-center mt-10">
               <Spinner animation="border" />
             </div>
-          ) : recCourse === null || recCourse === undefined ? (
+          ) : recCourse === null || recCourse === undefined || recCourse.length === 0 ? (
             <div className="text-center text-sm text-muted-foreground mt-10">
             </div>
           ) : (
             <>
               <h1>Recommend course</h1>
-              <div className="grid grid-cols-4 gap-8">
+              <div className="grid grid-cols-3 gap-8" style={{display: "flex"}}>
                 {recCourse.map((c) => (
                   <CourseCard
                     key={c.id}

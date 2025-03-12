@@ -11,7 +11,7 @@ const Footer = () => {
           <Logo />
           <p className="mt-4">
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia
-            aliquam officiis sint <rem className=""></rem>
+            aliquam officiis sint 
           </p>
           <div className="flex gap-4 text-lg mt-6">
             <FaYoutube className="text-red-600 text-3xl cursor-pointer" />
