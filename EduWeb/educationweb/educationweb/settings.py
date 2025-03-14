@@ -112,26 +112,50 @@ WSGI_APPLICATION = 'educationweb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'eduwebdb',
+#         'USER': 'eduweb_user',  # Trùng với MYSQL_USER trong docker-compose.yml
+#         'PASSWORD': '12345678',  # Trùng với MYSQL_PASSWORD
+#         'HOST': 'db',  # Đây là tên service của MySQL trong Docker
+#         'PORT': '3306',  # Cổng nội bộ của MySQL container
+#     }
+# }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'eduwebdb',
+#         'USER': 'root',  # Trùng với MYSQL_USER trong docker-compose.yml
+#         'PASSWORD': '12345678',  # Trùng với MYSQL_PASSWORD
+#         'HOST': '',  # Đây là tên service của MySQL trong Docker
+#         'PORT': '3306',  # Cổng nội bộ của MySQL container
+#     }
+# }
+import os
+IS_DOCKER = os.environ.get("IS_DOCKER", "false").lower() == "true"
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'eduwebdb',
-        'USER': 'eduweb_user',  # Trùng với MYSQL_USER trong docker-compose.yml
-        'PASSWORD': '12345678',  # Trùng với MYSQL_PASSWORD
-        'HOST': 'db',  # Đây là tên service của MySQL trong Docker
-        'PORT': '3306',  # Cổng nội bộ của MySQL container
+        'NAME': os.environ.get("MYSQL_DATABASE", "eduwebdb"),
+        'USER': os.environ.get("MYSQL_USER", "root"),
+        'PASSWORD': os.environ.get("MYSQL_PASSWORD", "12345678"),
+        'HOST': os.environ.get("MYSQL_HOST", "127.0.0.1" if not IS_DOCKER else "db"),
+        'PORT': os.environ.get("MYSQL_PORT", "3306"),
     }
 }
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://redis:6379/1',
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
 
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
 
 AUTH_USER_MODEL = 'courses.User'
 

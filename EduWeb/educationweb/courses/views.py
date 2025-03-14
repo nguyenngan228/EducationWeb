@@ -29,6 +29,10 @@ from decouple import config
 from django.core.cache import cache
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
+from deepface import DeepFace
+from django.core.files.storage import default_storage
+import os
+import cloudinary
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
@@ -179,7 +183,7 @@ class UserCourseViewSet(viewsets.ViewSet, generics.ListAPIView):
         return response
 
 
-@method_decorator(cache_page(60), name='list')
+# @method_decorator(cache_page(60), name='list')
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
     queryset = Category.objects.all()
     serializer_class = serializers.CategorySerializer
@@ -189,32 +193,28 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
     serializer_class = serializers.CourseSerializer
     pagination_class = paginators.CoursePaginator
     permission_classes = [permissions.IsAuthenticated]
-    print("Toi day roi nene")
     def get_queryset(self):
-        print("cache key")
-        cache_key = "courses_list"
-        print("cache key",cache_key)
-        queryset = None
+        # cache_key = "courses_list"
         # cached_courses = cache.get(cache_key)
-
+        #
         # if cached_courses:
         #     queryset = list(deserialize('json', cached_courses))
         #     return queryset
 
-        # queryset = Course.objects.all()
-        # if self.action == 'list':
-        #     if not self.request.query_params.get('create_chapter'):
-        #         queryset = queryset.filter(publish=True)
+        queryset = Course.objects.all()
+        if self.action == 'list':
+            if not self.request.query_params.get('create_chapter'):
+                queryset = queryset.filter(publish=True)
 
-        # q = self.request.query_params.get("q")
-        # if q:
-        #     queryset = queryset.filter(title__icontains=q)
+        q = self.request.query_params.get("q")
+        if q:
+            queryset = queryset.filter(title__icontains=q)
 
-        # cate_id = self.request.query_params.get('category_id')
-        # if cate_id:
-        #     queryset = queryset.filter(category_id=cate_id).order_by('id')
-        #     serialized_data = serialize('json', queryset)
-        #     cache.set(cache_key, serialized_data, timeout=60*2)
+        cate_id = self.request.query_params.get('category_id')
+        if cate_id:
+            queryset = queryset.filter(category_id=cate_id).order_by('id')
+            # serialized_data = serialize('json', queryset)
+            # cache.set(cache_key, serialized_data, timeout=60*2)
 
         return queryset
 
@@ -884,3 +884,30 @@ class RecommenViewset(viewsets.ViewSet, generics.ListAPIView):
 
         except Exception as e:
             return Response({'error': 'Có lỗi xảy ra: ' + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+@csrf_exempt
+def verify_avatar(request):
+    if request.method == "POST" and request.FILES.get("avatar"):
+        avatar = request.FILES["avatar"]
+
+        # 🔹 Upload ảnh lên Cloudinary
+        upload_result = cloudinary.uploader.upload(avatar)
+        image_url = upload_result['secure_url']
+        print(image_url)
+
+        try:
+            # 🔹 Phân tích ảnh bằng DeepFace
+            result = DeepFace.analyze(image_url, actions=['age', 'gender'])
+
+            if len(result) == 0:
+                return JsonResponse({"success": False, "message": "Không tìm thấy khuôn mặt."}, status=400)
+
+            return JsonResponse({"success": True, "message": "Ảnh hợp lệ", "avatar_url": image_url, "details": result})
+
+        except Exception as e:
+            return JsonResponse({"success": False, "message": "Lỗi xử lý ảnh.", "error": str(e)}, status=400)
+
+    return JsonResponse({"success": False, "message": "Yêu cầu không hợp lệ"}, status=400)
+

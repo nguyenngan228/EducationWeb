@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import CourseCard from "../course/courseCard/courseCard";
 import SearchBar from "./searchBar/searchBar";
 import Categories from "./cateBar/cateBar";
+import debounce from "lodash.debounce";
 
 export const StudentDashBoard = () => {
   const [categories, setCategories] = useState(null);
@@ -32,14 +33,14 @@ export const StudentDashBoard = () => {
 
   const loadCourses = async (categoryId = "", search = "", page = 1) => {
     setLoading(true);
+    console.log(searchTerm)
     const url = `?category_id=${encodeURIComponent(
       categoryId
-    )}&q=${encodeURIComponent(search)}&page=${page}`;
+    )}&q=${encodeURIComponent(searchTerm)}&page=${page}`;
     try {
       let res = await authAPI().get(endpoints["courses"](url));
       setCourses(res.data.results);
       setTotalPages(Math.ceil(res.data.count / 10));
-      console.log(res.data.results);
     } catch (ex) {
       console.error(ex);
     } finally {
@@ -50,6 +51,17 @@ export const StudentDashBoard = () => {
     loadCate(); // Load danh mục
     loadCourses(); // Load khóa học ban đầu
   }, []);
+
+  useEffect(() => {
+    const delayedSearch = debounce(() => {
+      loadCourses(cateId, searchTerm, 1);
+    }, 500); // Chờ 500ms sau khi người dùng ngừng nhập mới gọi API
+
+    delayedSearch();
+
+    return () => delayedSearch.cancel(); // Hủy nếu user tiếp tục nhập
+  }, [searchTerm]);
+
   
 
 
@@ -69,6 +81,7 @@ export const StudentDashBoard = () => {
       document.body.removeChild(script);
     };
   }, []);
+  
   
 
   const handleSelectCate = (cateId) => {

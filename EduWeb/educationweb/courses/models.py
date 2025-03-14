@@ -130,8 +130,6 @@ class Rating(Interaction):
 
 
 
-
-
 class Comment(Interaction):
     content = models.CharField(max_length=150)
 
@@ -156,4 +154,18 @@ class QuizAnswer(models.Model):
     question = models.ForeignKey(QuizQuestion, on_delete=models.CASCADE, related_name='answers')
     answer = models.CharField(max_length=255)
     is_correct = models.BooleanField(default=False)
+
+class Exam(models.Model):
+    question_exam = models.CharField(max_length=255)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='questin_exam')
+
+
+class Answer(models.Model):
+    question_exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='answer_exams')
+    answer_exam = models.CharField(max_length=255)
+
+
+class Student_Exam(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE,related_name='student')
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='exam')
 

@@ -47,8 +47,6 @@ const Login = () => {
     });
     setShowModal(true);
   };
-  console.log(username);
-  console.log(password);
 
   const login = async (e) => {
     e.preventDefault();
@@ -59,9 +57,8 @@ const Login = () => {
           qs.stringify({
             username: username,
             password: password,
-            client_id: "JRiSaMRTmrOpVvqnBsowPGx5qQeUlU0MifFGZ3Do",
-            client_secret:
-              "pOV9toWemg7xLa1NMMifnswHAdOnhtpggg0SMlbLm8gcrBfsMpUhrn9eoZ2Ks4fNLOch0Tdh69ki5liH4xrbuTvG7spytzOKNJ30P4go08BvmwkWCPz1nw4w6Q3X5qzY",
+            client_id: process.env.REACT_APP_CLIENT_ID_AUTH,
+            client_secret: process.env.REACT_APP_CLIENT_SECRET,
             grant_type: "password",
           }),
           {
@@ -111,6 +108,7 @@ const Login = () => {
     console.log("Login Failed");
   };
 
+
   return (
     <Container
       className="d-flex justify-content-center align-items-center"
@@ -142,10 +140,10 @@ const Login = () => {
               <Form.Group controlId="formBasicEmail">
                 <Form.Label className="form-label">Username</Form.Label>
                 <Form.Control
+                  style={{ height: "30px" }}
                   value={username}
                   onChange={(t) => setUsername(t.target.value)}
                   type="email"
-                  placeholder="Enter username"
                   isInvalid={!!errors.username}
                 />
                 <Form.Control.Feedback type="invalid">
@@ -155,10 +153,10 @@ const Login = () => {
               <Form.Group controlId="formBasicEmail">
                 <Form.Label className="form-label">Password</Form.Label>
                 <Form.Control
+                  style={{ height: "30px" }}
                   value={password}
                   onChange={(t) => setPassword(t.target.value)}
                   type="password"
-                  placeholder="Enter password"
                   isInvalid={!!errors.password}
                 />
                 <Form.Control.Feedback type="invalid">
@@ -167,9 +165,9 @@ const Login = () => {
               </Form.Group>
               <Button
                 onClick={login}
-                style={{ backgroundColor: "#0000FF" }}
+                style={{ backgroundColor: "#0000FF",height: "30px", fontSize: "15px" }}
                 type="submit"
-                className="w-100 mt-3"
+                className="w-100 mt-4"
               >
                 Continue
               </Button>

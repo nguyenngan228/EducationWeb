@@ -32,4 +32,5 @@ router.register('geminichat',views.GeminiChatViewSet,basename='geminichat')
 urlpatterns = [
     path('',include(router.urls)),
     path('stripe-webhook/', views.stripe_webhook, name='stripe-webhook'),
+    path('verify_avatar/', views.verify_avatar, name='verify_avatar'),
 ]

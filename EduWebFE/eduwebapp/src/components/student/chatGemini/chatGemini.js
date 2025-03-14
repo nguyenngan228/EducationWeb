@@ -40,6 +40,7 @@ const GeminiChat = () => {
       {!isOpen ? (
         <button
           className="bg-blue-500 text-white p-3 rounded-full shadow-lg flex items-center gap-2"
+          style={{position: 'fixed', bottom: '100px', right: '20px'}}
           onClick={() => setIsOpen(true)}
         >
           <MessageCircle size={24} />

@@ -7,6 +7,8 @@ import { useCart } from "../../configs/mycartcontext";
 import styles from "./navbar.module.css";
 import { Logo } from "./logo";
 import NavbarRoutes from "./navbarroutes";
+import cookie from "react-cookies";
+import axios from "axios";
 
 export const Navbar = ({ onSidebarToggle }) => {
   const [user, dispatch] = useContext(mycontext);
@@ -21,11 +23,13 @@ export const Navbar = ({ onSidebarToggle }) => {
   };
 
   const logout = () => {
-    dispatch({
-      type: "logout",
-    });
+    cookie.remove("token", { path: "/" });
+    cookie.remove("user", { path: "/" });
+    axios.defaults.headers.common["Authorization"] = null;
+    dispatch({ type: "logout" }); 
     navigate("/login", { replace: true });
   };
+
   const addToCart = (course) => {
     setItemsCart([...itemsCart, course]);
   };

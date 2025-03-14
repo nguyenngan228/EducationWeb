@@ -1,5 +1,3 @@
-import cookie from 'react-cookies'
-
 
 
 const MyUserReducer=(currentState,action)=>{
@@ -7,7 +5,6 @@ const MyUserReducer=(currentState,action)=>{
         case "login":
             return action.payload;
         case "logout":
-            cookie.remove("token")
             return null;
     }
     return currentState;

@@ -35,6 +35,7 @@ const App = () => {
     MyUserReducer,
     cookie.load("user") || null
   );
+  
   return (
     <Mycontext.Provider value={[user, dispatch]}>
       <CartProvider>
