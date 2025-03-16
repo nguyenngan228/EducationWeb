@@ -1,6 +1,6 @@
 from django.db.models.functions import TruncMonth, TruncQuarter, TruncYear
 
-from .models import Category, Course, User, Teacher, Rating, Student, Purchase, Chapter
+from .models import Category, Course, Rating, Purchase, UserProgress
 from django.db.models import Count
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
@@ -115,4 +115,12 @@ def send_activation_email(user, request):
         html_message=message,
     )
 
+def is_all_chapter_completed(student, course):
+    total_chapters = course.chapters.count()
+    completed_chapters = UserProgress.objects.filter(
+        student=student,
+        chapter__course=course,
+        is_completed=True
+    ).count()
+    return total_chapters > 0 and completed_chapters == total_chapters
 

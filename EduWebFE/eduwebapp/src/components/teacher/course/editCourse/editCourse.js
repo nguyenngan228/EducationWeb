@@ -120,6 +120,9 @@ const EditCourse = () => {
   const handleAddChater = () => {
     navigate(`/teawall/course/${course.id}/add_chapter`)
   }
+  const handleAddExam = () => {
+    navigate(`/teawall/course/${course.id}/add_exam`)
+  }
 
 
   return (
@@ -274,6 +277,38 @@ const EditCourse = () => {
                       Save
                     </Button>
                   </Form.Group>
+                )}
+              </div>
+              <div className="w-full p-4 rounded shadow" style={{ backgroundColor: '#f8fafc' }}>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <h3 className="text-lg font-bold">Examination</h3>
+                  <button onClick={handleAddExam} style={{ fontWeight: 'bold' }} className="flex items-center px-4 py-2 border-none cursor-pointer text-sm">
+                    <PlusCircle size={20} className="mr-2" />
+                    Add a examination
+                  </button>
+                </div>
+                {chapter === null ? (
+                  <Spinner animation="border" />
+                ) : (
+                  <div>
+                    {chapter.map((c, index) => (
+                      <div key={index} className="flex items-center justify-between p-1 mb-2 bg-blue-100 rounded">
+                        <div className="flex items-center">
+                          <div className="mr-4 cursor-pointer">::</div>
+                          <div>{c.title}</div>
+                        </div>
+                        <div className="flex items-center">
+                          {c.is_free && (
+                            <div className="px-2 py-1 text-xs text-white bg-black rounded-full">Free</div>
+                          )}
+                          <div className="px-2 py-1 text-xs text-white bg-blue-500 rounded-full">Published</div>
+                          <button onClick={() => navToEditChapter(c.id)} className="ml-2 flex items-center text-blue-500 hover:text-blue-700 bg-transparent border-none cursor-pointer">
+                            <Pencil className="me-1" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </Col>

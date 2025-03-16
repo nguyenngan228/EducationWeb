@@ -1,12 +1,10 @@
-from builtins import set
-
-from django.contrib.admin import action
 from django.http import JsonResponse, HttpResponse
-from rest_framework import viewsets, generics, request, parsers, permissions, status
+from rest_framework import viewsets, generics, parsers, permissions, status
 from .models import (Category, Course, Teacher, User,
-                     Lesson, Chapter, Student, UserProgress,
+                     Exam, Chapter, Student, UserProgress,
                      Purchase, StripeCustomer, Rating, Comment,
-                     Note, QuizQuestion, QuizAnswer)
+                     Note, QuizQuestion, QuizAnswer, Question, Answer,
+                     StudentExam, StudentAnswer)
 from rest_framework.response import Response
 from courses import serializers, paginators, perms
 from rest_framework.decorators import action
@@ -17,7 +15,7 @@ from django.db.models import Max, Count
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from .dao import (generate_system_token_for_user, send_activation_email,
-                  calculate_review, calculate_student, calculate_average_review, get_analytics)
+                  calculate_review, calculate_student, calculate_average_review, get_analytics, is_all_chapter_completed)
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth import get_user_model
 import pandas as pd
@@ -29,10 +27,10 @@ from decouple import config
 from django.core.cache import cache
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
-from deepface import DeepFace
 from django.core.files.storage import default_storage
 import os
 import cloudinary
+import time
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
@@ -41,8 +39,8 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     parser_classes = [parsers.JSONParser, parsers.MultiPartParser]
 
     def get_permissions(self):
-        # if self.action.__eq__('current_user'):
-        #     return [permissions.IsAuthenticated()]
+        if self.action.__eq__('current_user'):
+            return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
     def create(self, request, *args, **kwargs):
@@ -194,13 +192,6 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
     pagination_class = paginators.CoursePaginator
     permission_classes = [permissions.IsAuthenticated]
     def get_queryset(self):
-        # cache_key = "courses_list"
-        # cached_courses = cache.get(cache_key)
-        #
-        # if cached_courses:
-        #     queryset = list(deserialize('json', cached_courses))
-        #     return queryset
-
         queryset = Course.objects.all()
         if self.action == 'list':
             if not self.request.query_params.get('create_chapter'):
@@ -213,10 +204,36 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
         cate_id = self.request.query_params.get('category_id')
         if cate_id:
             queryset = queryset.filter(category_id=cate_id).order_by('id')
-            # serialized_data = serialize('json', queryset)
-            # cache.set(cache_key, serialized_data, timeout=60*2)
 
         return queryset
+
+    # def get_queryset(self):
+    #     cache_key = f"user_courses:{self.request.GET.urlencode()}"
+    #
+    #     start_time = time.time()  # Bắt đầu đếm thời gian
+    #
+    #     cached_data = cache.get(cache_key)
+    #     if cached_data:
+    #         print(f"🔥 Lấy từ cache! Thời gian: {time.time() - start_time} giây")
+    #         return cached_data
+    #
+    #     queryset = Course.objects.filter(publish=True)
+    #
+    #     q = self.request.query_params.get("q")
+    #     if q:
+    #         queryset = queryset.filter(title__icontains=q)
+    #
+    #     cate_id = self.request.query_params.get('category_id')
+    #     if cate_id:
+    #         queryset = queryset.filter(category_id=cate_id)
+    #
+    #     queryset = queryset.order_by('id')
+    #
+    #     # Lưu vào cache trong 5 phút (300 giây)
+    #     cache.set(cache_key, queryset, timeout=300)
+    #
+    #     print(f"⚙️ Lấy từ database! Thời gian: {time.time() - start_time} giây")
+    #     return queryset
 
     def create(self, request, *args, **kwargs):
         request.query_params = request.query_params.copy()
@@ -886,28 +903,85 @@ class RecommenViewset(viewsets.ViewSet, generics.ListAPIView):
             return Response({'error': 'Có lỗi xảy ra: ' + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class CourseExamViewSet(viewsets.GenericViewSet):
+    serializer_class = serializers.ExamSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-@csrf_exempt
-def verify_avatar(request):
-    if request.method == "POST" and request.FILES.get("avatar"):
-        avatar = request.FILES["avatar"]
-
-        # 🔹 Upload ảnh lên Cloudinary
-        upload_result = cloudinary.uploader.upload(avatar)
-        image_url = upload_result['secure_url']
-        print(image_url)
+    def get(self, request, course_id):
+        user = request.user
+        try:
+            student = user.student
+        except:
+            return Response({'detail': 'Only students can access this.'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
-            # 🔹 Phân tích ảnh bằng DeepFace
-            result = DeepFace.analyze(image_url, actions=['age', 'gender'])
+            course = Course.objects.get(id=course_id)
+        except Course.DoesNotExist:
+            return Response({'detail': 'Course not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-            if len(result) == 0:
-                return JsonResponse({"success": False, "message": "Không tìm thấy khuôn mặt."}, status=400)
+        # Check if completed all chapters
+        if is_all_chapter_completed(student, course):
+            try:
+                exam = course.exam  # OneToOneField nên đơn giản
+                serializer = serializers.ExamSerializer(exam)
+                return Response(serializer.data)
+            except Exam.DoesNotExist:
+                return Response({'detail': 'No exam for this course.'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                return Response({'detail': 'Complete all chapters to unlock exam.'}, status=status.HTTP_403_FORBIDDEN)
 
-            return JsonResponse({"success": True, "message": "Ảnh hợp lệ", "avatar_url": image_url, "details": result})
 
-        except Exception as e:
-            return JsonResponse({"success": False, "message": "Lỗi xử lý ảnh.", "error": str(e)}, status=400)
+class ExamViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Exam.objects.all()
+    serializer_class = serializers.ExamSerializer
 
-    return JsonResponse({"success": False, "message": "Yêu cầu không hợp lệ"}, status=400)
+
+class StudentExamViewSet(viewsets.ModelViewSet):
+    queryset = StudentExam.objects.all()
+    serializer_class = serializers.StudentExamSerializer
+
+    def create(self, request, *args, **kwargs):
+        student = get_object_or_404(Student, user=request.user)
+        exam_id = request.data.get('exam')
+        exam = Exam.objects.filter(id__in=exam_id)
+
+        # Tạo StudentExam
+        student_exam = StudentExam.objects.create(student=student, exam=exam)
+        serializer = self.get_serializer(student_exam)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class StudentAnswerViewSet(viewsets.ModelViewSet):
+    queryset = StudentAnswer.objects.all()
+    serializer_class = serializers.StudentAnswerSerializer
+
+    def create(self, request, *args, **kwargs):
+        # Học viên trả lời câu hỏi
+        student_exam_id = request.data.get('student_exam')
+        question_id = request.data.get('question')
+        answer_id = request.data.get('answer')
+
+        student_exam = get_object_or_404(StudentExam, id=student_exam_id, student=request.user.student)
+        question = get_object_or_404(Question, id=question_id)
+        answer = get_object_or_404(Answer, id=answer_id)
+
+        # Kiểm tra đúng/sai
+        is_correct = answer.is_correct
+
+        StudentAnswer.objects.create(
+            student_exam=student_exam,
+            question=question,
+            selected_answer=answer,
+            is_correct=is_correct
+        )
+        return Response({'message': 'Answer submitted successfully'}, status=status.HTTP_201_CREATED)
+
+    def list(self, request, *args, **kwargs):
+        # Xem lại đáp án đã làm
+        student_exam_id = request.query_params.get('student_exam')
+        student_exam = get_object_or_404(StudentExam, id=student_exam_id, student=request.user.student)
+        answers = StudentAnswer.objects.filter(student_exam=student_exam)
+        serializer = self.get_serializer(answers, many=True)
+        return Response(serializer.data)
+
 

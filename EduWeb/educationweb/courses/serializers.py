@@ -1,8 +1,9 @@
 from .models import (Category, Course, Teacher, User,
                      Lesson, Student, Chapter, UserProgress,
                      Purchase, StripeCustomer, Rating, Comment,
-                     Note, QuizQuestion, QuizAnswer)
-from rest_framework import serializers, request
+                     Note, QuizQuestion, QuizAnswer, Exam, Question,
+                     Answer, StudentAnswer, StudentExam)
+from rest_framework import serializers
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -170,20 +171,6 @@ class CourseSerializer(serializers.ModelSerializer):
                 'id': instance.category.id,
                 'title': instance.category.title
             }
-            # if user.is_authenticated and Teacher.objects.filter(user=user).exists():
-            #     return {
-            #         'id': rep['id'],
-            #         'category': rep['category'],
-            #         'teacher': rep['teacher'],
-            #         'publish': rep['publish'],
-            #         'price': rep['price'],
-            #         'thumbnail': rep['thumbnail'],
-            #         'chapters': rep['chapters'],
-            #         'title': rep['title'],
-            #         'description': rep['description'],
-            #         'create_date': rep['create_date'],
-            #         'update_date': rep['update_date']
-            #     }
             return rep
 
     def update(self, instance, validated_data):
@@ -296,3 +283,34 @@ class GoogleLoginSerializer(serializers.Serializer):
 
 class GeminiChatSerializer(serializers.Serializer):
     message = serializers.CharField()
+
+class AnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Answer
+        fields = '__all__'
+
+class QuestionSerializer(serializers.ModelSerializer):
+    answers = AnswerSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Question
+        fields = '__all__'
+
+class ExamSerializer(serializers.ModelSerializer):
+    questions = QuestionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Exam
+        fields = '__all__'
+
+class StudentAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentAnswer
+        fields = '__all__'
+
+class StudentExamSerializer(serializers.ModelSerializer):
+    student_answers = StudentAnswerSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = StudentExam
+        fields = '__all__'

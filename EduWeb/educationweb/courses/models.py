@@ -155,17 +155,59 @@ class QuizAnswer(models.Model):
     answer = models.CharField(max_length=255)
     is_correct = models.BooleanField(default=False)
 
+
 class Exam(models.Model):
-    question_exam = models.CharField(max_length=255)
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='questin_exam')
+    title = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='exams')
+    create_date = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    course = models.OneToOneField(Course, on_delete=models.CASCADE, related_name='exam', null=True, blank=True)
+
+    def __str__(self):
+        return self.title
+
+class Question(models.Model):
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions')
+    content = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.content
 
 
 class Answer(models.Model):
-    question_exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='answer_exams')
-    answer_exam = models.CharField(max_length=255)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers', null=True, blank=True)
+    content = models.CharField(max_length=255)
+    is_correct = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.content} ({'Correct' if self.is_correct else 'Incorrect'})"
 
 
-class Student_Exam(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE,related_name='student')
-    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='exam')
+class StudentExam(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
+    score = models.FloatField(null=True, blank=True)
+    status = models.CharField(max_length=50, default='In Progress')
+    submit_date = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('student', 'exam')
+
+    def __str__(self):
+        return f"{self.student.user.username} - {self.exam.title}"
+
+
+class StudentAnswer(models.Model):
+    student_exam = models.ForeignKey(StudentExam, on_delete=models.CASCADE, related_name='answers')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    selected_answer = models.ForeignKey(Answer, on_delete=models.CASCADE)
+    is_correct = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if self.selected_answer.is_correct:
+            self.is_correct = True
+        super().save(*args, **kwargs)
+
+
+
 

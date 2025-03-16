@@ -25,6 +25,9 @@ router.register('googleauth', views.GoogleLoginViewSet, basename='googleauth'),
 router.register('usercourse', views.UserCourseViewSet, basename='usercourse'),
 router.register('recommend',views.RecommenViewset,basename='recommend')
 router.register('geminichat',views.GeminiChatViewSet,basename='geminichat')
+router.register('exams', views.ExamViewSet, basename='exams')
+router.register('student_exams', views.StudentExamViewSet, basename='student_exams')
+router.register('student_answers', views.StudentAnswerViewSet, basename='student_answers')
 
 
 
@@ -32,5 +35,4 @@ router.register('geminichat',views.GeminiChatViewSet,basename='geminichat')
 urlpatterns = [
     path('',include(router.urls)),
     path('stripe-webhook/', views.stripe_webhook, name='stripe-webhook'),
-    path('verify_avatar/', views.verify_avatar, name='verify_avatar'),
 ]

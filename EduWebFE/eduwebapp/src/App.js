@@ -29,6 +29,7 @@ import { Active } from "./auth/signup/active";
 import { CartProvider } from "./configs/mycartcontext";
 import { Cart } from "./components/student/cart/cart";
 import { CourseDashboard } from "./components/user/dashboard/courseDashboard";
+import { Exam } from "./components/teacher/course/examination/exam";
 
 const App = () => {
   const [user, dispatch] = useReducer(
@@ -61,6 +62,7 @@ const App = () => {
               />
               <Route path="analyst" element={<AnalystPage />} />
               <Route path="course/:id/add_chapter" element={<Chapter />} />
+              <Route path="course/:id/add_exam" element={<Exam />} />
               <Route
                 path="course/:id/edit_chapter/:chapterId"
                 element={<EditChapter />}
