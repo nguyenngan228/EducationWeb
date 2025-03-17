@@ -931,9 +931,18 @@ class CourseExamViewSet(viewsets.GenericViewSet):
                 return Response({'detail': 'Complete all chapters to unlock exam.'}, status=status.HTTP_403_FORBIDDEN)
 
 
-class ExamViewSet(viewsets.ReadOnlyModelViewSet):
+class ExamViewSet(viewsets.ModelViewSet):
     queryset = Exam.objects.all()
     serializer_class = serializers.ExamSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        teacher = Teacher.objects.get(user=self.request.user)
+        course_id = self.request.data.get('course')
+        course = get_object_or_404(Course, id=course_id)
+        serializer.save(teacher=teacher, course = course)
+
+
 
 
 class StudentExamViewSet(viewsets.ModelViewSet):

@@ -290,18 +290,35 @@ class AnswerSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class QuestionSerializer(serializers.ModelSerializer):
-    answers = AnswerSerializer(many=True, read_only=True)
+    answers = AnswerSerializer(many=True)
 
     class Meta:
         model = Question
-        fields = '__all__'
+        fields = ['content', 'answers']
+        extra_kwargs = {
+            'exam': {'required': False},  # <--- Thêm dòng này
+        }
 
 class ExamSerializer(serializers.ModelSerializer):
-    questions = QuestionSerializer(many=True, read_only=True)
+    questions = QuestionSerializer(many=True, required=False)
 
     class Meta:
         model = Exam
         fields = '__all__'
+        extra_kwargs = {
+            'teacher': {'required': False},  # <--- Thêm dòng này
+        }
+
+    def create(self, validated_data):
+        questions_data = validated_data.pop('questions', [])
+        exam = Exam.objects.create(**validated_data)
+
+        for question_data in questions_data:
+            answers_data = question_data.pop('answers', [])
+            question = Question.objects.create(exam=exam, **question_data)
+            for answer_data in answers_data:
+                Answer.objects.create(question=question, **answer_data)
+        return exam
 
 class StudentAnswerSerializer(serializers.ModelSerializer):
     class Meta:
