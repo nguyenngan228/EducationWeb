@@ -44,6 +44,10 @@ export const endpoints = {
   course_unauth: (kw) => `usercourse/${kw}`,
   rec_course: 'recommend/course_recommend/',
   chat_gemeni: 'geminichat/chatgemini/',
+  exam:'exams/',
+  get_exam:(id) => `courses/${id}/get_exam/`,
+  exam_detail:(id) => `exams/${id}/`,
+
 
 };
 export default axios.create({

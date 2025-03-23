@@ -1,11 +1,11 @@
 import React from "react";
-import { Lock, PlayCircle, CheckCircle, ChevronLeft } from "lucide-react";
+import { Lock, PlayCircle, CheckCircle, ChevronLeft, FileText } from "lucide-react";
 import "./sideBar.css";
 import { Spinner } from "react-bootstrap";
 import { CourseProgress } from "../courseProgress/courseProgress";
 import { useNavigate } from "react-router-dom";
 
-export const Sidebar = ({ course, handleChapterSelect }) => {
+export const Sidebar = ({ course, handleChapterSelect, handleExamSelect }) => {
   const navigate = useNavigate();
   const handleExit = () => {
     navigate("/stuwall/dashboard");
@@ -26,6 +26,8 @@ export const Sidebar = ({ course, handleChapterSelect }) => {
           </div>
 
           {course.is_purchased && <CourseProgress value={course.progress} />}
+
+          {/* Render chapters */}
           {course.chapters.map((c) => {
             const isLocked = !c.is_free && !course.is_purchased;
             const isCompleted = course.userProgress.some(
@@ -37,22 +39,26 @@ export const Sidebar = ({ course, handleChapterSelect }) => {
               ? CheckCircle
               : PlayCircle;
 
-            const itemClass = `flex items-center gap-x-2 text-sm font-[500] pl-6 transition-all hover:bg-slate-300 ${
-              isCompleted ? "completed-text" : "text-black"
-            } hover-bg`;
-            const borderClass = `${
-              isCompleted ? "border-emerald-700" : "border-slate-700"
-            } ml-auto opacity-0 h-full transition-all`;
-
             return (
-              <React.Fragment key={c.id}>
+              <React.Fragment key={`chapter-${c.id}`}>
                 <div className="chapter" onClick={() => handleChapterSelect(c)}>
-                  <Icon size={22} className="" />
+                  <Icon size={22} />
                   <span>{c.title}</span>
                 </div>
               </React.Fragment>
             );
           })}
+
+          {/* Render Exam cuối cùng nếu có */}
+          {course.exam && (
+            <div
+              className="chapter mt-4 exam-item"
+              onClick={() => handleExamSelect(course.exam)}
+            >
+              <FileText size={22} />
+              <span>{course.exam.title}</span>
+            </div>
+          )}
         </>
       )}
     </div>

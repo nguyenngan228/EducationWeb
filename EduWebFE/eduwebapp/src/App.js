@@ -30,6 +30,7 @@ import { CartProvider } from "./configs/mycartcontext";
 import { Cart } from "./components/student/cart/cart";
 import { CourseDashboard } from "./components/user/dashboard/courseDashboard";
 import { Exam } from "./components/teacher/course/examination/exam";
+import { ExamDetail } from "./components/student/course/exam/examDetail";
 
 const App = () => {
   const [user, dispatch] = useReducer(
@@ -76,6 +77,7 @@ const App = () => {
               <Route path="cart" element={<Cart />} />
               <Route path="course/:id" element={<CourseDetail />}>
                 <Route path="chapter/:chapterid" element={<ChapterDetail />} />
+                <Route path="exam/:examId" element={<ExamDetail />} />
               </Route>
               <Route path="my-course" element={<MyLearning />} />
               <Route path="profile" element={<Profile />} />

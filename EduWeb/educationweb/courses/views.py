@@ -15,7 +15,8 @@ from django.db.models import Max, Count
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from .dao import (generate_system_token_for_user, send_activation_email,
-                  calculate_review, calculate_student, calculate_average_review, get_analytics, is_all_chapter_completed)
+                  calculate_review, calculate_student, calculate_average_review, get_analytics,
+                  is_all_chapter_completed)
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth import get_user_model
 import pandas as pd
@@ -30,7 +31,7 @@ from django.utils.decorators import method_decorator
 from django.core.files.storage import default_storage
 import os
 import cloudinary
-import time
+from django.utils import timezone
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
@@ -166,7 +167,8 @@ class UserCourseViewSet(viewsets.ViewSet, generics.ListAPIView):
     def export_csv(self, request):
         # Lấy dữ liệu khóa học được xuất ra CSV
         courses = Course.objects.filter(publish=True).values('id', 'title',
-                                                             'category__title', 'price')  # Truy vấn với tên của category
+                                                             'category__title',
+                                                             'price')  # Truy vấn với tên của category
 
         # Chuyển dữ liệu thành DataFrame của Pandas
         df = pd.DataFrame(courses)
@@ -191,6 +193,7 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
     serializer_class = serializers.CourseSerializer
     pagination_class = paginators.CoursePaginator
     permission_classes = [permissions.IsAuthenticated]
+
     def get_queryset(self):
         queryset = Course.objects.all()
         if self.action == 'list':
@@ -254,6 +257,29 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
         chapters = course.chapters.all()
         return Response(serializers.ChapterSerializer(chapters, many=True).data,
                         status=status.HTTP_200_OK)
+    # def get_chapter(self, request, pk):
+    #     try:
+    #         course = Course.objects.get(pk=pk)
+    #     except Course.DoesNotExist:
+    #         return Response({"error": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
+    #
+    #     # Lấy chapters
+    #     chapters = course.chapters.all()
+    #     chapter_data = serializers.ChapterSerializer(chapters, many=True).data
+    #     # Check completed
+    #     student = Student.objects.get(user=request.user)
+    #     all_completed = is_all_chapter_completed(student, course)
+    #
+    #     # Nếu đã hoàn thành, thêm Exam vào
+    #     if all_completed and hasattr(course, 'exam'):
+    #         exam_data = serializers.ExamSerializer(course.exam).data
+    #     else:
+    #         exam_data = None
+    #
+    #     return Response({
+    #         'chapters': chapter_data,
+    #         'exam': exam_data
+    #     }, status=status.HTTP_200_OK)
 
     @action(methods=['post'], detail=False,
             permission_classes=[permissions.IsAuthenticated, perms.IsTeacher])
@@ -342,6 +368,16 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
             serializers.RatingSerializer(l.rating_set.order_by("-id").all(), many=True,
                                          context={"request": self.request}).data,
             status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'])
+    def get_exam(self, request, pk=None):
+        course = self.get_object()
+        try:
+            exam = course.exam
+            serializer = serializers.ExamSerializer(exam)
+            return Response(serializer.data)
+        except Exam.DoesNotExist:
+            return Response({"detail": "No Exam found for this Course."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ChapterViewSet(viewsets.ViewSet):
@@ -754,7 +790,6 @@ class PurchaseViewSet(viewsets.ModelViewSet):
         return Response({'students': serializer.data}, status=status.HTTP_200_OK)
 
 
-
 class GeminiChatViewSet(viewsets.GenericViewSet):
     genai.configure(api_key=config('GEMINI_API_KEY'))
 
@@ -842,6 +877,7 @@ cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
 print("\nMa trận Cosine Similarity (5 sản phẩm đầu tiên):")
 print(cosine_sim[:5, :5])  # In ra ma trận tương tự cho 5 sản phẩm đầu tiên
 
+
 class RecommenViewset(viewsets.ViewSet, generics.ListAPIView):
     serializer_class = serializers.UserCourseSerializer
     pagination_class = paginators.RecommendCoursePaginator
@@ -867,14 +903,15 @@ class RecommenViewset(viewsets.ViewSet, generics.ListAPIView):
 
             product_index = product_index[0]  # Lấy chỉ mục đầu tiên
 
-
             similar_scores = list(enumerate(cosine_sim[product_index]))
             similar_scores = sorted(similar_scores, key=lambda x: x[1], reverse=True)
-            similar_scores = [score for score in similar_scores if score[1] > 0 and products_df.iloc[score[0]]['id'] != product_id]  # Thử lấy 7 sản phẩm tương tự nhất
+            similar_scores = [score for score in similar_scores if score[1] > 0 and products_df.iloc[score[0]][
+                'id'] != product_id]  # Thử lấy 7 sản phẩm tương tự nhất
             if len(similar_scores) == 0.0:
                 # Nếu không có sản phẩm tương tự, lấy sản phẩm trong cùng danh mục
                 category_title = products_df.iloc[product_index]['category__title']
-                same_category_products = products_df[(products_df['category__title'] == category_title) & (products_df['id'] != product_id)]
+                same_category_products = products_df[
+                    (products_df['category__title'] == category_title) & (products_df['id'] != product_id)]
                 recommended_products = same_category_products['id'].tolist()
 
                 queryset = Course.objects.filter(id__in=recommended_products)
@@ -882,7 +919,6 @@ class RecommenViewset(viewsets.ViewSet, generics.ListAPIView):
                 return Response(serializer.data)
 
             product_indices = [i[0] for i in similar_scores]
-
 
             # Trả về danh sách các sản phẩm tương tự
             recommended_products = products_df.loc[product_indices, ['id', 'title']]
@@ -940,9 +976,7 @@ class ExamViewSet(viewsets.ModelViewSet):
         teacher = Teacher.objects.get(user=self.request.user)
         course_id = self.request.data.get('course')
         course = get_object_or_404(Course, id=course_id)
-        serializer.save(teacher=teacher, course = course)
-
-
+        serializer.save(teacher=teacher, course=course)
 
 
 class StudentExamViewSet(viewsets.ModelViewSet):
@@ -964,33 +998,56 @@ class StudentAnswerViewSet(viewsets.ModelViewSet):
     queryset = StudentAnswer.objects.all()
     serializer_class = serializers.StudentAnswerSerializer
 
-    def create(self, request, *args, **kwargs):
-        # Học viên trả lời câu hỏi
-        student_exam_id = request.data.get('student_exam')
-        question_id = request.data.get('question')
-        answer_id = request.data.get('answer')
+    @action(detail=False, methods=['post'])
+    def submit_exam(self, request):
+        student = get_object_or_404(Student, user=request.user)
+        exam_id = request.data.get('exam_id')
+        answers = request.data.get('answers')
 
-        student_exam = get_object_or_404(StudentExam, id=student_exam_id, student=request.user.student)
-        question = get_object_or_404(Question, id=question_id)
-        answer = get_object_or_404(Answer, id=answer_id)
+        if not exam_id or not answers:
+            return Response({"error": "Missing exam_id or answers"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Kiểm tra đúng/sai
-        is_correct = answer.is_correct
+        # Check Exam tồn tại
+        exam = get_object_or_404(Exam, id=exam_id)
 
-        StudentAnswer.objects.create(
-            student_exam=student_exam,
-            question=question,
-            selected_answer=answer,
-            is_correct=is_correct
-        )
-        return Response({'message': 'Answer submitted successfully'}, status=status.HTTP_201_CREATED)
+        # Tạo hoặc lấy StudentExam
+        student_exam, created = StudentExam.objects.get_or_create(student=student, exam=exam)
 
-    def list(self, request, *args, **kwargs):
-        # Xem lại đáp án đã làm
-        student_exam_id = request.query_params.get('student_exam')
-        student_exam = get_object_or_404(StudentExam, id=student_exam_id, student=request.user.student)
-        answers = StudentAnswer.objects.filter(student_exam=student_exam)
-        serializer = self.get_serializer(answers, many=True)
-        return Response(serializer.data)
+        # Xóa đáp án cũ nếu có
+        student_exam.answers.all().delete()
 
+        correct_count = 0
+        total_questions = exam.questions.count()
+
+        for ans in answers:
+            try:
+                question = Question.objects.get(id=ans['question_id'], exam=exam)
+                selected_answer = Answer.objects.get(id=ans['answer_id'], question=question)
+            except (Question.DoesNotExist, Answer.DoesNotExist):
+                continue  # skip nếu không hợp lệ
+
+            is_correct = selected_answer.is_correct
+            if is_correct:
+                correct_count += 1
+
+            StudentAnswer.objects.create(
+                student_exam=student_exam,
+                question=question,
+                selected_answer=selected_answer,
+                is_correct=is_correct
+            )
+
+        # Tính điểm
+        score = round((correct_count / total_questions) * 10, 2)
+        student_exam.score = score
+        student_exam.status = "Completed"
+        student_exam.submit_date = timezone.now()
+        student_exam.save()
+
+        return Response({
+            "message": "Exam submitted successfully",
+            "score": score,
+            "correct_answers": correct_count,
+            "total_questions": total_questions
+        }, status=status.HTTP_200_OK)
 

@@ -64,7 +64,11 @@ export const CourseDetail = () => {
 
   const handleChapterSelect = (chapter) => {
     nav(`/stuwall/course/${id}/chapter/${chapter.id}`);
+    console.log(chapter.id);
   };
+  const handleExamSelect = (exam) => {
+  nav(`/stuwall/course/${id}/exam/${exam.id}`);
+};
 
   const handleStarClick = async (index) => {
     const newRating = index + 1;
@@ -198,11 +202,11 @@ export const CourseDetail = () => {
 
   return (
     <div className="course-container">
-      <Sidebar course={course} handleChapterSelect={handleChapterSelect} />
+      <Sidebar course={course} handleChapterSelect={handleChapterSelect} handleExamSelect={handleExamSelect}/>
       <div className="content">
         <TopBar navToFeed={navToFeed} />
         <div className="main-content">
-          {window.location.pathname.includes("chapter") ? (
+        {/\/(chapter|exam)\//.test(window.location.pathname) ? (
             <Outlet />
           ) : (
             <div className="course-description">

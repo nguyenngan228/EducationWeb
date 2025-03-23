@@ -24,6 +24,7 @@ const EditCourse = () => {
   const [isEditingPrice, setIsEditingPrice] = useState(false);
   const [isEditingCategory, setIsEditingCategory] = useState(false)
   const [chapter, setChapter] = useState(null)
+  const [exam, setExam] = useState(null)
 
   const showConfetti = () => {
     confetti({
@@ -123,6 +124,15 @@ const EditCourse = () => {
   const handleAddExam = () => {
     navigate(`/teawall/course/${course.id}/add_exam`)
   }
+
+  const getExam = async () => {
+    let res = await authAPI().get(endpoints['get_exam'](id));
+    setExam(res.data);
+    console.log(res.data);
+  }
+  useEffect(() => {
+    getExam();
+  }, [id]);
 
 
   return (
@@ -287,27 +297,21 @@ const EditCourse = () => {
                     Add a examination
                   </button>
                 </div>
-                {chapter === null ? (
+                {exam === null ? (
                   <Spinner animation="border" />
                 ) : (
                   <div>
-                    {chapter.map((c, index) => (
-                      <div key={index} className="flex items-center justify-between p-1 mb-2 bg-blue-100 rounded">
+                      <div className="flex items-center justify-between p-1 mb-2 bg-blue-100 rounded">
                         <div className="flex items-center">
                           <div className="mr-4 cursor-pointer">::</div>
-                          <div>{c.title}</div>
+                          <div>{exam.title}</div>
                         </div>
                         <div className="flex items-center">
-                          {c.is_free && (
-                            <div className="px-2 py-1 text-xs text-white bg-black rounded-full">Free</div>
-                          )}
-                          <div className="px-2 py-1 text-xs text-white bg-blue-500 rounded-full">Published</div>
-                          <button onClick={() => navToEditChapter(c.id)} className="ml-2 flex items-center text-blue-500 hover:text-blue-700 bg-transparent border-none cursor-pointer">
+                          <button onClick={() => navToEditChapter(exam.id)} className="ml-2 flex items-center text-blue-500 hover:text-blue-700 bg-transparent border-none cursor-pointer">
                             <Pencil className="me-1" />
                           </button>
                         </div>
                       </div>
-                    ))}
                   </div>
                 )}
               </div>
