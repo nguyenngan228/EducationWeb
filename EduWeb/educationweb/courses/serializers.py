@@ -111,14 +111,14 @@ class TeacherCourseSerializer(serializers.ModelSerializer):
 class AnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
-        fields = '__all__'
+        fields = fields = ['id','question', 'content', 'is_correct']
 
 class QuestionSerializer(serializers.ModelSerializer):
     answers = AnswerSerializer(many=True)
 
     class Meta:
         model = Question
-        fields = ['content', 'answers']
+        fields = ['id', 'content', 'answers']
         extra_kwargs = {
             'exam': {'required': False},
         }

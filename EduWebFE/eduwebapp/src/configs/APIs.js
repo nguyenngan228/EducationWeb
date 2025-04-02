@@ -47,6 +47,7 @@ export const endpoints = {
   exam:'exams/',
   get_exam:(id) => `courses/${id}/get_exam/`,
   exam_detail:(id) => `exams/${id}/`,
+  submit_exam:'student_answers/submit_exam/'
 
 
 };

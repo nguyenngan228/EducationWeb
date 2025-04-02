@@ -805,11 +805,11 @@ class GeminiChatViewSet(viewsets.GenericViewSet):
                 "temperature": 0,
                 "top_p": 0.95,
                 "top_k": 40,
-                "max_output_tokens": 8192,
+                "max_output_tokens": 500,
                 "response_mime_type": "text/plain",
             },
         )
-        user_input = serializer.validated_data['message']
+        user_input = f"Answer concisely, up to 3-5 sentences. {serializer.validated_data['message']}"
 
         # Gửi yêu cầu đến Gemini và nhận phản hồi
         chat_session = model.start_chat(history=[])
