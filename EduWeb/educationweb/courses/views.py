@@ -864,18 +864,18 @@ def handle_checkout_session(session):
 
 products_df = pd.read_csv('courses.csv')
 
-print(products_df)
+# print(products_df)
 
 # Xây dựng vector đặc trưng TF-IDF từ tên sản phẩm
 tfidf_vectorizer = TfidfVectorizer(stop_words='english', norm='l2')
 tfidf_matrix = tfidf_vectorizer.fit_transform(products_df['title'])
-print("Ma trận TF-IDF (đã chuyển thành dạng array):")
-print(tfidf_matrix.toarray())
+# print("Ma trận TF-IDF (đã chuyển thành dạng array):")
+# print(tfidf_matrix.toarray())
 
 # Sử dụng cosine similarity để tính độ tương tự giữa các sản phẩm
 cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
-print("\nMa trận Cosine Similarity (5 sản phẩm đầu tiên):")
-print(cosine_sim[:5, :5])  # In ra ma trận tương tự cho 5 sản phẩm đầu tiên
+# print("\nMa trận Cosine Similarity (5 sản phẩm đầu tiên):")
+# print(cosine_sim[:5, :5])  # In ra ma trận tương tự cho 5 sản phẩm đầu tiên
 
 
 class RecommenViewset(viewsets.ViewSet, generics.ListAPIView):
@@ -992,6 +992,22 @@ class StudentExamViewSet(viewsets.ModelViewSet):
         student_exam = StudentExam.objects.create(student=student, exam=exam)
         serializer = self.get_serializer(student_exam)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'])
+    def exam_status(self, request):
+        student = get_object_or_404(Student, user=request.user)
+        course_id = request.query_params.get('exam_id')
+        if not course_id:
+            return Response({'error': 'course_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        exam_id = Exam.objects.filter(course_id=course_id).first()
+        student_exam = StudentExam.objects.filter(student=student, exam_id=exam_id).first()
+        if not student_exam:
+            return Response({'error': 'StudentExam not found'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(student_exam)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 
 class StudentAnswerViewSet(viewsets.ModelViewSet):

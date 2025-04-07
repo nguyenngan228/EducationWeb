@@ -36,8 +36,8 @@ export const Sidebar = ({ course, handleChapterSelect, handleExamSelect }) => {
             const Icon = isLocked
               ? Lock
               : isCompleted
-              ? CheckCircle
-              : PlayCircle;
+                ? CheckCircle
+                : PlayCircle;
 
             return (
               <React.Fragment key={`chapter-${c.id}`}>

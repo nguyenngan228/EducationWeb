@@ -12,6 +12,7 @@ import styles from "../../dashboard/dashboard.module.css";
 
 
 
+
 export const CourseDetail = () => {
   const { id } = useParams();
   const nav = useNavigate();
@@ -70,6 +71,7 @@ export const CourseDetail = () => {
   nav(`/stuwall/course/${id}/exam/${exam.id}`);
 };
 
+
   const handleStarClick = async (index) => {
     const newRating = index + 1;
     setRating(newRating);
@@ -125,7 +127,6 @@ export const CourseDetail = () => {
     try {
       let res = await authAPI().get(endpoints["get_cmt"](id));
       setListCmt(res.data);
-      console.info(res.data);
     } catch (ex) {
       console.error(ex);
     }
