@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { authAPI, endpoints } from "../../../../configs/APIs";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Noti } from "../../../common/modal/modal";
 
 export const ExamDetail = () => {
@@ -8,11 +8,32 @@ export const ExamDetail = () => {
   const [exam, setExam] = useState(null);
   const { id } = useParams();
   const [showModal, setShowModal] = useState(false);
+  const [examStatus, setExamStatus] = useState(null);
+  const navigate = useNavigate();
+  
+  const [showCompletedModal, setShowCompletedModal] = useState(true);
+
+  const handleHideCompletedModal = () => {
+    setShowCompletedModal(false);
+    navigate("/stuwall");
+  };
+
   const [modalProps, setModalProps] = useState({
     title: "",
     message: "",
     isError: false,
   });
+  const get_exam_status = async () => {
+    try {
+      let res = await authAPI().get(endpoints["get_exam_status"](id));
+      setExamStatus(res.data);
+    }catch (ex) {
+      console.error(ex);
+    }
+  }
+  useEffect(() => {
+    get_exam_status();      
+  }, [id]);
 
   const getExam = async () => {
     try {
@@ -73,10 +94,17 @@ export const ExamDetail = () => {
     const found = answers.find(ans => ans.question_id === questionId);
     return found?.answer_id === answerId;
   };
-
   return (
     <div className="max-w-3xl mx-auto p-4">
-      {exam === null ? (
+      {examStatus?.status === "Completed" ? (
+        <Noti
+          show={true}
+          onHide={handleHideCompletedModal}
+          title="Đã hoàn thành bài thi"
+          message={`Bạn đã làm bài thi này. Điểm: ${examStatus?.score}`}
+          isError={false}
+        />
+      ) : exam === null ? (
         <p>Loading...</p>
       ) : (
         <>
@@ -109,6 +137,7 @@ export const ExamDetail = () => {
           </button>
         </>
       )}
+  
       <Noti
         show={showModal}
         onHide={() => setShowModal(false)}
@@ -118,4 +147,50 @@ export const ExamDetail = () => {
       />
     </div>
   );
-};
+};  
+
+//   return (
+//     <div className="max-w-3xl mx-auto p-4">
+//       {exam === null ? (
+//         <p>Loading...</p>
+//       ) : (
+//         <>
+//           <h2 className="text-xl font-bold mb-4">{exam.title}</h2>
+//           {exam.questions.map((question, index) => (
+//             <div key={question.id} className="mb-4 p-3 border rounded">
+//               <h3 className="font-medium mb-2">
+//                 {index + 1}. {question.content}
+//               </h3>
+//               {question.answers.map(answer => (
+//                 <div key={answer.id} className="flex items-center mb-1">
+//                   <input
+//                     type="radio"
+//                     name={`question-${index}`}
+//                     value={answer.id}
+//                     checked={isChecked(question.id, answer.id)}
+//                     onChange={() => handleAnswerSelect(question.id, answer.id)}
+//                     className="mr-2"
+//                   />
+//                   <label>{answer.content}</label>
+//                 </div>
+//               ))}
+//             </div>
+//           ))}
+//           <button
+//             onClick={handleSubmit}
+//             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+//           >
+//             Submit
+//           </button>
+//         </>
+//       )}
+//       <Noti
+//         show={showModal}
+//         onHide={() => setShowModal(false)}
+//         title={modalProps.title}
+//         message={modalProps.message}
+//         isError={modalProps.isError}
+//       />
+//     </div>
+//   );
+// };

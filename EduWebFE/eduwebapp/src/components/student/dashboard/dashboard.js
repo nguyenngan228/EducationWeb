@@ -49,18 +49,19 @@ export const StudentDashBoard = () => {
   };
   useEffect(() => {
     loadCate(); // Load danh mục
-    loadCourses(); // Load khóa học ban đầu
-  }, []);
+    loadCourses(cateId,searchTerm,page); // Load khóa học ban đầu
+  }, [page]);
 
   useEffect(() => {
     const delayedSearch = debounce(() => {
+      setPage(1);
       loadCourses(cateId, searchTerm, 1);
     }, 500); // Chờ 500ms sau khi người dùng ngừng nhập mới gọi API
 
     delayedSearch();
 
     return () => delayedSearch.cancel(); // Hủy nếu user tiếp tục nhập
-  }, [searchTerm]);
+  }, [searchTerm, cateId]); // Chỉ gọi khi searchTerm hoặc cateId thay đổi
 
   
 
@@ -88,9 +89,11 @@ export const StudentDashBoard = () => {
     if (selectedCategory === cateId) {
       setSelectedCategory("");
       setCateId("");
+      loadCourses("", searchTerm, 1);
     } else {
       setSelectedCategory(cateId);
       setCateId(cateId);
+      loadCourses(cateId, searchTerm, 1);
     }
     setPage(1);
     loadCourses(cateId, searchTerm, 1);
@@ -102,7 +105,7 @@ export const StudentDashBoard = () => {
   };
 
   const handlePageChange = (newPage) => {
-    if (newPage > 0 && newPage <= totalPages) {
+    if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
     }
   };
