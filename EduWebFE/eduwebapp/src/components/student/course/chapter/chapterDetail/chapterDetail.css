@@ -21,6 +21,7 @@
 
 .chapter-video {
     width: 100%;
+    max-width: 100%;
     height: auto;
     display: block;
     border: none;  
@@ -93,6 +94,7 @@
 }
 .video-container {
     position: relative; 
+    width: 100%;
 }
 
  

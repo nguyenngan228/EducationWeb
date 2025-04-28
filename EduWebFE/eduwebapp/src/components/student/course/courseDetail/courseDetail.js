@@ -203,11 +203,11 @@ export const CourseDetail = () => {
 
   return (
     <div className="course-container">
-      <Sidebar course={course} handleChapterSelect={handleChapterSelect} handleExamSelect={handleExamSelect}/>
+      <Sidebar course={course} handleChapterSelect={handleChapterSelect} />
       <div className="content">
         <TopBar navToFeed={navToFeed} />
         <div className="main-content">
-        {/\/(chapter|exam)\//.test(window.location.pathname) ? (
+          {window.location.pathname.includes("chapter") ? (
             <Outlet />
           ) : (
             <div className="course-description">

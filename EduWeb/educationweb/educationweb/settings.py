@@ -122,29 +122,19 @@ WSGI_APPLICATION = 'educationweb.wsgi.application'
 #         'PORT': '3306',  # Cổng nội bộ của MySQL container
 #     }
 # }
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'eduwebdb',
-#         'USER': 'root',  # Trùng với MYSQL_USER trong docker-compose.yml
-#         'PASSWORD': '12345678',  # Trùng với MYSQL_PASSWORD
-#         'HOST': '',  # Đây là tên service của MySQL trong Docker
-#         'PORT': '3306',  # Cổng nội bộ của MySQL container
-#     }
-# }
-import os
-IS_DOCKER = os.environ.get("IS_DOCKER", "false").lower() == "true"
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get("MYSQL_DATABASE", "eduwebdb"),
-        'USER': os.environ.get("MYSQL_USER", "root"),
-        'PASSWORD': os.environ.get("MYSQL_PASSWORD", "12345678"),
-        'HOST': os.environ.get("MYSQL_HOST", "127.0.0.1" if not IS_DOCKER else "db"),
-        'PORT': os.environ.get("MYSQL_PORT", "3306"),
+        'NAME': 'eduwebdb',
+        'USER': 'root',  # Trùng với MYSQL_USER trong docker-compose.yml
+        'PASSWORD': '12345678',  # Trùng với MYSQL_PASSWORD
+        'HOST': '',  # Đây là tên service của MySQL trong Docker
+        'PORT': '3306',  # Cổng nội bộ của MySQL container
     }
 }
+import os
+IS_DOCKER = os.environ.get("IS_DOCKER", "false").lower() == "true"
+
 
 CACHES = {
     "default": {
@@ -205,7 +195,6 @@ CLIENT_SECRET = config('CLIENT_SECRET')
 STRIPE_TEST_PUBLIC_KEY = config('STRIPE_TEST_PUBLIC_KEY')
 STRIPE_TEST_SECRET_KEY = config('STRIPE_TEST_SECRET_KEY')
 DOMAIN = 'http://localhost:3000/'
-# DOMAIN = 'https://coursenn.netlify.app/'
 
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')
 

@@ -1,13 +1,15 @@
 import { useCart } from "../../../configs/mycartcontext";
 import "./cart.css";
-import { useContext, useEffect} from "react";
+import { useContext, useState} from "react";
 import { authAPI, endpoints } from "../../../configs/APIs";
 import mycontext from "../../../configs/mycontext";
 
 export const Cart = () => {
-  const { state, dispatch } = useCart();
+  const { state, clearCart } = useCart();
     const { items: cartItems } = state;
     const [user] = useContext(mycontext);
+    const cart = state.items;
+    const [isLoading, setIsLoading] = useState(false);
 
     // Tính tổng giá
     const totalPrice = cartItems.reduce(
@@ -15,18 +17,49 @@ export const Cart = () => {
         0
     );
 
-    // Hàm thanh toán
     const payment = async (e) => {
         e.preventDefault();
+        if (!window.confirm(`Xác nhận thanh toán cho ${cart.length} khóa học?`)) {
+            return;
+        }
+
+        setIsLoading(true);
         try {
-            const courseIds = cartItems.map((item) => item.id);
-            let res = await authAPI().post(endpoints["payment"], {
-                student: user.id,
-                course: courseIds,
-            });
-            window.location.href = res.data.url;
+            if (!cart || cart.length === 0) {
+                throw new Error("Giỏ hàng trống");
+            }
+
+            if (!user?.id) {
+                throw new Error("Vui lòng đăng nhập để thanh toán");
+            }
+
+            const payload = {
+                course: cart.map(item => {
+                    if (!item.id) {
+                        throw new Error(`Khóa học không hợp lệ: ${JSON.stringify(item)}`);
+                    }
+                    return item.id;
+                })
+            };
+            console.log("Payload gửi đi:", payload);
+
+            let res = await authAPI().post(endpoints['payment'], payload);
+            if (res.data?.url) {
+                window.location.href = res.data.url;
+                clearCart();
+                const userId = user?.id;
+                if (userId) {
+                    localStorage.removeItem(`cart_user_${userId}`);
+                }
+            } else {
+                throw new Error("Không nhận được URL thanh toán");
+            }
         } catch (ex) {
-            console.error(ex);
+            console.error("Lỗi chi tiết:", ex.response?.data || ex.message);
+            const errorMsg = ex.response?.data?.error || ex.message || "Vui lòng thử lại";
+            alert(`Lỗi: ${errorMsg}`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -46,7 +79,7 @@ export const Cart = () => {
                                         {item.price.toLocaleString()}$
                                     </span>
                                 </div>
-                                <button className="buy-button">Buy</button>
+                                <button onClick={payment} className="buy-button">Buy</button>
                             </div>
                         </div>
                     ))}

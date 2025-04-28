@@ -5,7 +5,7 @@ import { Spinner } from "react-bootstrap";
 import { CourseProgress } from "../courseProgress/courseProgress";
 import { useNavigate } from "react-router-dom";
 
-export const Sidebar = ({ course, handleChapterSelect, handleExamSelect }) => {
+export const Sidebar = ({ course, handleChapterSelect }) => {
   const navigate = useNavigate();
   const handleExit = () => {
     navigate("/stuwall/dashboard");
@@ -50,7 +50,7 @@ export const Sidebar = ({ course, handleChapterSelect, handleExamSelect }) => {
           })}
 
           {/* Render Exam cuối cùng nếu có */}
-          {course.exam && (
+          {/* {course.exam && (
             <div
               className="chapter mt-4 exam-item"
               onClick={() => handleExamSelect(course.exam)}
@@ -58,7 +58,7 @@ export const Sidebar = ({ course, handleChapterSelect, handleExamSelect }) => {
               <FileText size={22} />
               <span>{course.exam.title}</span>
             </div>
-          )}
+          )} */}
         </>
       )}
     </div>

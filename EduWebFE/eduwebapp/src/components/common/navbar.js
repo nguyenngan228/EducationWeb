@@ -3,12 +3,12 @@ import { useContext, useState } from "react";
 import mycontext from "../../configs/mycontext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "react-bootstrap";
-import { useCart } from "../../configs/mycartcontext";
 import styles from "./navbar.module.css";
 import { Logo } from "./logo";
 import NavbarRoutes from "./navbarroutes";
 import cookie from "react-cookies";
 import axios from "axios";
+import { useCart } from "../../configs/mycartcontext";
 
 export const Navbar = ({ onSidebarToggle }) => {
   const [user, dispatch] = useContext(mycontext);
@@ -16,6 +16,7 @@ export const Navbar = ({ onSidebarToggle }) => {
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [itemsCart, setItemsCart] = useState([]);
   const { state, setState } = useCart();
+  const { clearCart } = useCart();
   const handleAvatarClick = () => {
     setShowSubMenu(!showSubMenu);
     if (user.is_teacher) navigate("/teawall/profile");

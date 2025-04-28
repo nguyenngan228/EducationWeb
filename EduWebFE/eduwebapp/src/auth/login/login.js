@@ -145,6 +145,7 @@ const Login = () => {
                   onChange={(t) => setUsername(t.target.value)}
                   type="email"
                   isInvalid={!!errors.username}
+                  autoComplete="username"
                 />
                 <Form.Control.Feedback type="invalid">
                   {errors.username}
@@ -158,6 +159,7 @@ const Login = () => {
                   onChange={(t) => setPassword(t.target.value)}
                   type="password"
                   isInvalid={!!errors.password}
+                  autoComplete="current-password"
                 />
                 <Form.Control.Feedback type="invalid">
                   {errors.password}

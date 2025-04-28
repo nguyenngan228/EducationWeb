@@ -40,7 +40,7 @@ const App = () => {
   
   return (
     <Mycontext.Provider value={[user, dispatch]}>
-      <CartProvider>
+      <CartProvider user={user}>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Navigate to="/login" />} />

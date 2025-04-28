@@ -22,7 +22,7 @@ from django.contrib.auth import get_user_model
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import csv
+import numpy as np
 import google.generativeai as genai
 from decouple import config
 from django.core.cache import cache
@@ -32,6 +32,8 @@ from django.core.files.storage import default_storage
 import os
 import cloudinary
 from django.utils import timezone
+import logging
+logger = logging.getLogger(__name__)
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
@@ -183,10 +185,38 @@ class UserCourseViewSet(viewsets.ViewSet, generics.ListAPIView):
         return response
 
 
-# @method_decorator(cache_page(60), name='list')
+
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
     queryset = Category.objects.all()
     serializer_class = serializers.CategorySerializer
+
+    # def get_queryset(self):
+    #     # Tạo cache key cho danh sách danh mục
+    #     cache_key = "category_list"
+    #
+    #     # Kiểm tra cache
+    #     cached_queryset = cache.get(cache_key)
+    #     if cached_queryset is not None:
+    #         print(f"Cache hit for {cache_key}")
+    #         return cached_queryset
+    #
+    #     # Nếu không có trong cache, truy vấn database
+    #     print(f"Cache miss for {cache_key}")
+    #     queryset = Category.objects.all()
+    #
+    #     # Lưu vào cache với timeout (ví dụ: 24 giờ vì danh mục ít thay đổi)
+    #     cache.set(cache_key, queryset, timeout=86400)
+    #     return queryset
+    #
+    # def create(self, request, *args, **kwargs):
+    #     # Tạo danh mục mới
+    #     response = super().create(request, *args, **kwargs)
+    #
+    #     # Xóa cache khi danh mục mới được tạo
+    #     cache.delete("category_list")
+    #     logger.info("Cache invalidated for category_list after create")
+    #
+    #     return response
 
 
 class CourseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
@@ -209,34 +239,35 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
             queryset = queryset.filter(category_id=cate_id).order_by('id')
 
         return queryset
-
     # def get_queryset(self):
-    #     cache_key = f"user_courses:{self.request.GET.urlencode()}"
+    #     # Tạo cache key dựa trên query params để đảm bảo tính duy nhất
+    #     q = self.request.query_params.get("q", "")
+    #     cate_id = self.request.query_params.get("category_id", "")
+    #     create_chapter = self.request.query_params.get("create_chapter", "")
+    #     cache_key = f"course_list:q={q}:cate={cate_id}:create_chapter={create_chapter}"
     #
-    #     start_time = time.time()  # Bắt đầu đếm thời gian
+    #     # Kiểm tra cache
+    #     cached_queryset = cache.get(cache_key)
+    #     if cached_queryset is not None:
+    #         return cached_queryset
     #
-    #     cached_data = cache.get(cache_key)
-    #     if cached_data:
-    #         print(f"🔥 Lấy từ cache! Thời gian: {time.time() - start_time} giây")
-    #         return cached_data
+    #     # Nếu không có trong cache, truy vấn database
+    #     queryset = Course.objects.all()
+    #     if self.action == 'list':
+    #         if not create_chapter:
+    #             queryset = queryset.filter(publish=True)
     #
-    #     queryset = Course.objects.filter(publish=True)
-    #
-    #     q = self.request.query_params.get("q")
     #     if q:
     #         queryset = queryset.filter(title__icontains=q)
     #
-    #     cate_id = self.request.query_params.get('category_id')
     #     if cate_id:
-    #         queryset = queryset.filter(category_id=cate_id)
+    #         queryset = queryset.filter(category_id=cate_id).order_by('id')
     #
-    #     queryset = queryset.order_by('id')
-    #
-    #     # Lưu vào cache trong 5 phút (300 giây)
-    #     cache.set(cache_key, queryset, timeout=300)
-    #
-    #     print(f"⚙️ Lấy từ database! Thời gian: {time.time() - start_time} giây")
+    #     # Lưu vào cache với timeout (ví dụ: 1 giờ)
+    #     cache.set(cache_key, queryset, timeout=3600)
     #     return queryset
+
+
 
     def create(self, request, *args, **kwargs):
         request.query_params = request.query_params.copy()
@@ -247,6 +278,7 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
         instance = self.get_object()
         serializer = self.get_serializer(instance, context={'request': request})
         return Response(serializer.data)
+
 
     @action(methods=['get'], detail=True)
     def get_chapter(self, request, pk):
@@ -864,18 +896,71 @@ def handle_checkout_session(session):
 
 products_df = pd.read_csv('courses.csv')
 
-# print(products_df)
+print(products_df)
 
 # Xây dựng vector đặc trưng TF-IDF từ tên sản phẩm
 tfidf_vectorizer = TfidfVectorizer(stop_words='english', norm='l2')
 tfidf_matrix = tfidf_vectorizer.fit_transform(products_df['title'])
-# print("Ma trận TF-IDF (đã chuyển thành dạng array):")
-# print(tfidf_matrix.toarray())
+print("Ma trận TF-IDF (đã chuyển thành dạng array):")
+print(tfidf_matrix.toarray())
 
 # Sử dụng cosine similarity để tính độ tương tự giữa các sản phẩm
 cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
-# print("\nMa trận Cosine Similarity (5 sản phẩm đầu tiên):")
-# print(cosine_sim[:5, :5])  # In ra ma trận tương tự cho 5 sản phẩm đầu tiên
+print("\nMa trận Cosine Similarity (5 sản phẩm đầu tiên):")
+print(cosine_sim[:5, :5])  # In ra ma trận tương tự cho 5 sản phẩm đầu tiên
+# Lấy tên đặc trưng (từ vựng)
+# feature_names = tfidf_vectorizer.get_feature_names_out()
+# tfidf_array = tfidf_matrix.toarray()
+#
+# # Chọn từ khóa có giá trị TF-IDF cao nhất cho mỗi khóa học (5 khóa học đầu tiên)
+# top_keywords = []
+# keyword_indices = []
+# for i in range(5):  # Lấy 5 khóa học đầu tiên
+#     # Lấy chỉ số của từ có giá trị TF-IDF cao nhất cho khóa học i
+#     top_idx = np.argsort(tfidf_array[i])[::-1][0]  # Lấy 1 từ khóa quan trọng nhất
+#     keyword = feature_names[top_idx]
+#     # Kiểm tra để tránh trùng từ khóa
+#     if keyword not in top_keywords:
+#         top_keywords.append(keyword)
+#         keyword_indices.append(top_idx)
+#     else:
+#         # Nếu từ khóa trùng, lấy từ khóa có giá trị TF-IDF cao thứ hai
+#         top_idx = np.argsort(tfidf_array[i])[::-1][1]
+#         keyword = feature_names[top_idx]
+#         top_keywords.append(keyword)
+#         keyword_indices.append(top_idx)
+#
+# # Tạo ma trận TF-IDF cho 5 khóa học với các từ khóa đã chọn
+# selected_tfidf = tfidf_array[:5, keyword_indices]
+# tfidf_df = pd.DataFrame(
+#     selected_tfidf,  # Ma trận 5x5 (5 khóa học, 5 từ khóa)
+#     columns=top_keywords,  # Tên cột là các từ khóa
+#     index=products_df['title'][:5]  # Tên dòng là tên khóa học
+# )
+#
+# # In ma trận TF-IDF
+# print("\nMa trận TF-IDF (5 khóa học đầu tiên, từ khóa quan trọng nhất của mỗi khóa):")
+# print(tfidf_df.round(3).to_string())
+#
+# # Tính cosine similarity
+# cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
+#
+# # In ma trận Cosine Similarity
+# print("\nMa trận Cosine Similarity (5 khóa học đầu tiên):")
+# cosine_df = pd.DataFrame(
+#     cosine_sim[:5, :5],
+#     columns=products_df['title'][:5],
+#     index=products_df['title'][:5]
+# )
+# print(cosine_df.round(3).to_string())
+#
+# # Lưu kết quả ra file
+# output_dir = 'D:/'  # Lưu vào thư mục làm việc hiện tại
+# print(f"\nCác file CSV được lưu tại: {output_dir}")
+# print(f"\nCác file CSV được lưu tại: {output_dir}")
+# products_df.head().to_csv(os.path.join(output_dir, 'products_head.csv'), index=False)
+# tfidf_df.to_csv(os.path.join(output_dir, 'tfidf_matrix.csv'))
+# cosine_df.to_csv(os.path.join(output_dir, 'cosine_similarity.csv'))
 
 
 class RecommenViewset(viewsets.ViewSet, generics.ListAPIView):

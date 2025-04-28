@@ -3,10 +3,23 @@ id,title,category__title,price
 2,Design for beginner,Design,50
 3,Online Advertising,Marketing,99
 4,Health care,Health & Fitness,230
+5,Introduction to Graphic Design,Design,299
+6,Introduction to Web Development,IT & Software,99
+7,Digital Marketing Fundamentals,Marketing,35
 9,Music Production for Beginners,Music,40
 10,Fitness Training for Beginners,Health & Fitness,60
+11,Filmmaking 101,Filming,79
+12,Entrepreneurship Essentials,Business,120
 13,Full-Stack Developer Bootcamp,Development,199
 14,Mastering Microsoft Office,Office Productivity,120
+16,UI/UX Design Fundamentals,Design,99
+17,Introduction to Python Programming,IT & Software,200
+18,Social Media Marketing Mastery,Marketing,299
+19,Personal Finance for Beginners,Finace & Accounting,20
+20,Beginner Guitar Lessons,Music,49
+21,Yoga for Beginners,Health & Fitness,99
+22,Video Editing with Adobe Premiere Pro,Filming,99
+23,Project Management Essentials,Business,200
 24,Building APIs with Django,Development,123
 25,Google Workspace for Professionals,Office Productivity,129
 28,Adobe Photoshop Essentials,Design,299
@@ -16,6 +29,5 @@ id,title,category__title,price
 33,Flutter for beginner,IT & Software,129
 35,Ruby,IT & Software,200
 36,Test web,IT & Software,229
+38,"HTML, CSS for beginner",Music,100
 40,Independent,Personal Development,1000
-41,Odoo Development,IT & Software,1000
-43,Cloud Computing,IT & Software,1000

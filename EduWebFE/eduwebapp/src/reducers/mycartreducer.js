@@ -18,7 +18,10 @@ export const MyCartReducer = (state = { items: [] }, action) => {
             return { ...state, items: state.items.filter(item => item.id !== action.payload.id) };
 
         case "LOAD_CART":
-            return { ...state, items: action.payload }; // Cập nhật toàn bộ items từ payload
+            return { ...state, items: action.payload }; // Cập nhật toàn bộ items từ payload;
+
+        case "CLEAR_CART":
+            return { ...state, items: [] };
 
         default:
             return state;

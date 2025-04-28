@@ -107,6 +107,11 @@ export const ChapterDetail = () => {
                 "student": user.id,
                 "course": chapter.course.id
             })
+            const payload = {
+                student: user.id,
+                course: chapter.course.id
+            };
+            console.log("Payload gửi đi:", payload);
             window.location.href = res.data.url;
         } catch (ex) { console.error(ex) }
 

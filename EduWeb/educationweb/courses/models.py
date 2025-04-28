@@ -80,7 +80,8 @@ class Lesson(models.Model):
 
 class Chapter(Common):
     course = models.ForeignKey(Course,on_delete=models.CASCADE,related_name='chapters')
-    video = CloudinaryField('video', resource_type='video', null=True, blank=True)
+    # video = CloudinaryField('video', resource_type='video', null=True, blank=True)
+    video = models.URLField(blank=True, null=True)
     position = models.PositiveIntegerField(editable=False)
     is_free = models.BooleanField(default=False)
 
