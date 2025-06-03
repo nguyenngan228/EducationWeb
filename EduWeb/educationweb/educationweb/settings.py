@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import cloudinary
 from decouple import config
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'cloudinary',
+    'embed_video',
     'oauth2_provider',
     'corsheaders',
     'rest_framework_simplejwt',
@@ -89,7 +91,6 @@ cloudinary.config(
     secure=True
 )
 
-import os
 
 TEMPLATES = [
     {
@@ -207,3 +208,4 @@ EMAIL_HOST_USER = 'thanhngan.220803@gmail.com'
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
 VERIFY_EMAIL_URL = 'users-activate'
+FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://localhost:3000')

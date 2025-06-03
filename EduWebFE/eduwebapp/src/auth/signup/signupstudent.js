@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { Container, Row, Col, Button, Form } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./signup.css";
@@ -46,11 +46,6 @@ const SignUpStudent = () => {
       type: "text",
       field: "phoneNumber",
     },
-    {
-      label: "Qualification",
-      type: "text",
-      field: "qualification",
-    },
   ];
 
   const [user, setUser] = useState({
@@ -68,11 +63,13 @@ const SignUpStudent = () => {
   const avatar = useRef();
   const [myuser, dispatch] = useContext(mycontext);
   const [showModal, setShowModal] = useState(false);
+  const [qualifications, setQualifications] = useState(null);
   const [modalProps, setModalProps] = useState({
     title: "",
     message: "",
     isError: false,
   });
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const validateForm = () => {
@@ -121,10 +118,22 @@ const SignUpStudent = () => {
       return { ...current, [field]: e.target.value };
     });
   };
+  const get_qualifications = async () => {
+      try {
+        let res = await APIs.get(endpoints["qualification"]);
+        setQualifications(res.data);
+      } catch (error) {
+        console.error("Failed to fetch qualifications", error);
+      }
+    }
+    useEffect(() => {
+      get_qualifications();
+    }, []);
 
   const register = async (e) => {
     e.preventDefault();
     if (validateForm()) {
+      setLoading(true);
       let form = new FormData();
       for (let key in user)
         if (key !== "confirm") {
@@ -143,8 +152,6 @@ const SignUpStudent = () => {
           },
         });
         navigate("/checkmail");
-        // console.log(res.data)
-        // cookie.save("token", res.data.tokens.access)
 
         cookie.save("user", res.data);
         dispatch({
@@ -155,6 +162,8 @@ const SignUpStudent = () => {
       } catch (ex) {
         alert(ex);
         handleShowErrorModal();
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -252,14 +261,32 @@ const SignUpStudent = () => {
                   ref={avatar}
                 />
               </Form.Group>
+              <Form.Group className="mb-3" controlId="qualification">
+                <Form.Label className="form-label">Qualification</Form.Label>
+                <Form.Select
+                  onChange={(e) => change(e, "qualification")}
+                  value={user.qualification || ""}
+                  isInvalid={!!errors.qualification}
+                >
+                  <option value="">-- Select Qualification --</option>
+                  {qualifications?.map((q) => (
+                    <option key={q.id} value={q.id}>{q.name}</option>
+                  ))}
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {errors.qualification}
+                </Form.Control.Feedback>
+              </Form.Group>
               <Button
                 onClick={register}
                 style={{ backgroundColor: "#0000FF" }}
                 type="submit"
                 className="w-100 mt-3"
+                disabled={loading}
               >
-                Continue
+                {loading ? "Loading..." : "Continue"}
               </Button>
+
             </Form>
 
             <div

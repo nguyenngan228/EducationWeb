@@ -5,6 +5,7 @@ import { authAPI, endpoints } from '../../../../configs/APIs';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faVideo } from '@fortawesome/free-solid-svg-icons';
 import { ArrowUpLeft, Pencil } from 'lucide-react';
+import { YouTubePlayer } from '../../../common/player/ytPlayer';
 
 export const EditChapter = () => {
   const { id, chapterId } = useParams()
@@ -36,6 +37,7 @@ export const EditChapter = () => {
       console.error(ex);
     }
   };
+
 
   useEffect(() => {
     loadInitialChapter();
@@ -89,11 +91,8 @@ export const EditChapter = () => {
     }
   };
 
-  const handleTimeUpdate = (e) => {
-    const currentTime = e.target.currentTime;
-    setVideoCurrentTime(currentTime);
 
-  };
+
   const addQuestion = async () => {
     try {
       let res = await authAPI().post(endpoints['add_question'](chapterId), {
@@ -103,7 +102,6 @@ export const EditChapter = () => {
         "answers": answers
 
       })
-      console.info(res.data)
     } catch (ex) { console.error(ex) }
   }
 
@@ -242,26 +240,24 @@ export const EditChapter = () => {
             <Col md={6}>
               <Form.Group className="chapter-section">
                 <Form.Label>Chapter video</Form.Label>
-                {video && !isEditingVideo && (
+                {(!isEditingVideo && video) ? (
                   <div className="video-preview">
-                    <video src={video} controls onTimeUpdate={handleTimeUpdate} />
+                    <YouTubePlayer
+                      videoUrl={video}
+                      onTimeUpdate={setVideoCurrentTime}
+                    />
                   </div>
-                )}
-                {isEditingVideo && (
-                  <div className="chapter-video" onClick={() => videoInputRef.current.click()}>
-                    <FontAwesomeIcon icon={faVideo} size="2x" />
-                    <span>Add a video</span>
-                    {videoInputRef.current && videoInputRef.current.files[0] && (
-                      <div className="video-preview">
-                        <video src={URL.createObjectURL(videoInputRef.current.files[0])} controls />
-                      </div>
-                    )}
+                ) : (
+                  <div className="video-preview">
                     <Form.Control
-                      type="file"
-                      ref={videoInputRef}
-                      accept="video/*"
-                      style={{ display: 'none' }}
-
+                      type="text"
+                      value={video}
+                      onChange={(e) => setVideo(e.target.value)}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                    />
+                    <YouTubePlayer
+                      videoUrl={video}
+                      onTimeUpdate={setVideoCurrentTime}
                     />
                   </div>
                 )}
@@ -278,9 +274,8 @@ export const EditChapter = () => {
                 >
                   {isEditingVideo ? 'Done' : 'Edit'}
                 </Button>
-
-
               </Form.Group>
+
               <Form.Group className="mt-4">
                 <Form.Label>Quiz Question</Form.Label>
                 <FormControl
@@ -328,4 +323,9 @@ export const EditChapter = () => {
       </div>
     </div>
   );
+};
+const extractVideoId = (url) => {
+  const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/;
+  const match = url.match(regex);
+  return match ? match[1] : '';
 };

@@ -16,12 +16,12 @@ export const Question=(onAddQuestion)=>{
     };
   
     const updateTimestamp = () => {
-      if (videoRef.current) {
-        const currentTime = videoRef.current.currentTime;
-        const minutes = Math.floor(currentTime / 60);
-        const seconds = Math.floor(currentTime % 60);
-        setTimestamp(`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
-      }
+      // if (videoRef.current) {
+      //   const currentTime = videoRef.current.currentTime;
+      //   const minutes = Math.floor(currentTime / 60);
+      //   const seconds = Math.floor(currentTime % 60);
+      //   setTimestamp(`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
+      // }
     };
   
     return (

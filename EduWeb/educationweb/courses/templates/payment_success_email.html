@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+    <h2>Hi {{ student.user.get_full_name }}!</h2>
+    <p>You have successfully paid for the following courses:</p>
+    <ul>
+      {% for course in courses %}
+        <li><strong>{{ course.title }}</strong></li>
+        <li>Price: {{ course.price }}</li>
+        <li>{{ course.description|truncatewords:20 }}</li>
+      {% endfor %}
+    </ul>
+    <p>Thank you for trusting and using our services!</p>
+</body>
+</html>

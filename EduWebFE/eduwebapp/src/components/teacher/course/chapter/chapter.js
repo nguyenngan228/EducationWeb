@@ -12,11 +12,11 @@ export const Chapter = () => {
     const [description, setDescription] = useState('');
     const [isFreePreview, setIsFreePreview] = useState(false);
     const [isLoading, setIsLoading] = useState(false)
-    const videoInputRef = useRef(); 
+    const [videoUrl, setVideoUrl] = useState('');
     const navigate = useNavigate();
-    const {id}=useParams()
-    
-    
+    const { id } = useParams()
+
+
 
 
     const handleSave = async (e) => {
@@ -25,25 +25,20 @@ export const Chapter = () => {
         let form = new FormData();
         form.append('title', title);
         form.append('description', description);
-        form.append('is_free',  isFreePreview ? 'True' : 'False');
-        
-        
-        
-        if (videoInputRef.current && videoInputRef.current.files[0]) {
-            form.append('video', videoInputRef.current.files[0]);
-        } else {
-            console.info('No video founed');
-        }
-        try{
-            let res = await authAPI().post(endpoints['create_chapter'](id), form,{
-                  headers: {
-                      'Content-Type': 'multipart/form-data'
-                  }
+        form.append('is_free', isFreePreview ? 'True' : 'False');
+        form.append('video', videoUrl);
+
+
+        try {
+            let res = await authAPI().post(endpoints['create_chapter'](id), form, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             });
             navigate(`/teawall/course/${id}/edit_course`)
-        }catch(ex){
-        console.error(ex)
-        }finally{
+        } catch (ex) {
+            console.error(ex)
+        } finally {
             setIsLoading(false)
         }
     };
@@ -68,22 +63,24 @@ export const Chapter = () => {
 
 
                 <Form.Group className="chapter-section">
-                    <Form.Label>Chapter video</Form.Label>
-                    <div className="chapter-video" onClick={() => videoInputRef.current.click()}>
-                        <FontAwesomeIcon icon={faVideo} size="2x" />
-                        <span>Add a video</span>
-                        {videoInputRef.current && videoInputRef.current.files[0] && (
-                            <div className="video-preview">
-                                <video src={URL.createObjectURL(videoInputRef.current.files[0])} controls />
-                            </div>
-                        )}
-                        <Form.Control
-                            type="file"
-                            ref={videoInputRef}
-                            accept="video/*"
-                            style={{ display: 'none' }}
-                        />
-                    </div>
+                    <Form.Label>Chapter video (YouTube URL)</Form.Label>
+                    <Form.Control
+                        type="text"
+                        value={videoUrl}
+                        onChange={(e) => setVideoUrl(e.target.value)}
+                        placeholder="https://www.youtube.com/watch?v=..."
+                    />
+                    {videoUrl && (
+                        <div className="video-preview" style={{ marginTop: "10px" }}>
+                            <iframe
+                                width="100%"
+                                height="315"
+                                src={`https://www.youtube.com/embed/${extractVideoId(videoUrl)}`}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                            ></iframe>
+                        </div>
+                    )}
                 </Form.Group>
 
                 <Form.Group className="chapter-section full-width">
@@ -110,14 +107,19 @@ export const Chapter = () => {
                         />
                     </div>
                 </Form.Group>
-                
+
 
                 <div>
-                    <Button style={{backgroundColor:"black",color:"white"}} className="save-button" disabled={isLoading} onClick={handleSave}>
-                        {isLoading?<Spinner animation="border" role="status"/>:"Save"}
+                    <Button style={{ backgroundColor: "black", color: "white" }} className="save-button" disabled={isLoading} onClick={handleSave}>
+                        {isLoading ? <Spinner animation="border" role="status" /> : "Save"}
                     </Button>
                 </div>
             </Form>
         </div>
     );
+};
+const extractVideoId = (url) => {
+    const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/;
+    const match = url.match(regex);
+    return match ? match[1] : '';
 };

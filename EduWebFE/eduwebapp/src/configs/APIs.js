@@ -49,6 +49,7 @@ export const endpoints = {
   exam_detail:(id) => `exams/${id}/`,
   submit_exam:'student_answers/submit_exam/',
   get_exam_status:(id) => `/student_exams/exam_status/?exam_id=${id}`,
+  qualification: 'qualifications/',
 
 
 };

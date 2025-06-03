@@ -24,7 +24,7 @@ const EditCourse = () => {
   const [isEditingPrice, setIsEditingPrice] = useState(false);
   const [isEditingCategory, setIsEditingCategory] = useState(false)
   const [chapter, setChapter] = useState(null)
-  const [exam, setExam] = useState(null)
+  // const [exam, setExam] = useState(null)
 
   const showConfetti = () => {
     confetti({
@@ -121,18 +121,18 @@ const EditCourse = () => {
   const handleAddChater = () => {
     navigate(`/teawall/course/${course.id}/add_chapter`)
   }
-  const handleAddExam = () => {
-    navigate(`/teawall/course/${course.id}/add_exam`)
-  }
+  // const handleAddExam = () => {
+  //   navigate(`/teawall/course/${course.id}/add_exam`)
+  // }
 
-  const getExam = async () => {
-    let res = await authAPI().get(endpoints['get_exam'](id));
-    setExam(res.data);
-    console.log(res.data);
-  }
-  useEffect(() => {
-    getExam();
-  }, [id]);
+  // const getExam = async () => {
+  //   let res = await authAPI().get(endpoints['get_exam'](id));
+  //   setExam(res.data);
+  //   console.log(res.data);
+  // }
+  // useEffect(() => {
+  //   getExam();
+  // }, [id]);
 
 
   return (
@@ -289,7 +289,7 @@ const EditCourse = () => {
                   </Form.Group>
                 )}
               </div>
-              <div className="w-full p-4 rounded shadow" style={{ backgroundColor: '#f8fafc' }}>
+              {/* <div className="w-full p-4 rounded shadow" style={{ backgroundColor: '#f8fafc' }}>
                 <div className="d-flex justify-content-between align-items-center mb-4">
                   <h3 className="text-lg font-bold">Examination</h3>
                   <button onClick={handleAddExam} style={{ fontWeight: 'bold' }} className="flex items-center px-4 py-2 border-none cursor-pointer text-sm">
@@ -314,7 +314,7 @@ const EditCourse = () => {
                       </div>
                   </div>
                 )}
-              </div>
+              </div> */}
             </Col>
             <Col md={6}>
               <div className="course-title-editor" style={{ padding: '20px', background: '#f8fafc', borderRadius: '10px', margin: '10px' }}>

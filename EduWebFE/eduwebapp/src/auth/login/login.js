@@ -14,6 +14,7 @@ const Login = () => {
   const [username, setUsername] = useState();
   const [password, setPassword] = useState();
   const [user, dispatch] = useContext(mycontext);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [modalProps, setModalProps] = useState({
@@ -52,6 +53,7 @@ const Login = () => {
     e.preventDefault();
     if (validateForm()) {
       try {
+        setLoading(true);
         let res = await APIs.post(
           endpoints["login"],
           qs.stringify({
@@ -79,6 +81,8 @@ const Login = () => {
       } catch (ex) {
         console.error(ex);
         handleShowErrorModal();
+      }finally{
+        setLoading(false);
       }
     }
   };
@@ -140,7 +144,7 @@ const Login = () => {
               <Form.Group controlId="formBasicEmail">
                 <Form.Label className="form-label">Username</Form.Label>
                 <Form.Control
-                  style={{ height: "30px" }}
+                  style={{ height: "30px", fontSize: "15px" }}
                   value={username}
                   onChange={(t) => setUsername(t.target.value)}
                   type="email"
@@ -154,7 +158,7 @@ const Login = () => {
               <Form.Group controlId="formBasicEmail">
                 <Form.Label className="form-label">Password</Form.Label>
                 <Form.Control
-                  style={{ height: "30px" }}
+                  style={{ height: "30px", fontSize: "15px" }}
                   value={password}
                   onChange={(t) => setPassword(t.target.value)}
                   type="password"
@@ -167,12 +171,14 @@ const Login = () => {
               </Form.Group>
               <Button
                 onClick={login}
-                style={{ backgroundColor: "#0000FF",height: "30px", fontSize: "15px" }}
+                style={{ backgroundColor: "#0000FF" }}
                 type="submit"
-                className="w-100 mt-4"
+                className="w-100 mt-3"
+                disabled={loading}
               >
-                Continue
+                {loading ? "Loading..." : "Continue"}
               </Button>
+
             </Form>
             <div
               className="text-center mt-3"

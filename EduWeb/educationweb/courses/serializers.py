@@ -2,8 +2,15 @@ from .models import (Category, Course, Teacher, User,
                      Lesson, Student, Chapter, UserProgress,
                      Purchase, StripeCustomer, Rating, Comment,
                      Note, QuizQuestion, QuizAnswer, Exam, Question,
-                     Answer, StudentAnswer, StudentExam)
+                     Answer, StudentAnswer, StudentExam, Qualification)
 from rest_framework import serializers
+from embed_video.backends import detect_backend
+
+
+class QualificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Qualification
+        fields = '__all__'
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -64,10 +71,19 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ChapterSerializer(serializers.ModelSerializer):
+    # def to_representation(self, instance):
+    #     rep = super().to_representation(instance)
+    #     if instance.video:
+    #         rep['video'] = instance.video.url
+    #     return rep
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         if instance.video:
-            rep['video'] = instance.video.url
+            try:
+                backend = detect_backend(instance.video)
+                rep['video'] = backend.get_embed_url()  # Trả về link dạng "https://www.youtube.com/embed/abc123"
+            except:
+                rep['video'] = instance.video  #nếu không detect được
         return rep
 
     class Meta:
@@ -326,6 +342,7 @@ class GoogleLoginSerializer(serializers.Serializer):
 
 class GeminiChatSerializer(serializers.Serializer):
     message = serializers.CharField()
+    video_url = serializers.URLField()
 
 
 

@@ -8,6 +8,7 @@ import mycontext from "../../../../../configs/mycontext";
 import { ChapterProgressButton } from "../chapterProgressButton/chapterProgressButton";
 import confetti from 'canvas-confetti';
 import GeminiChat from "../../../chatGemini/chatGemini";
+import { YouTubePlayer } from "../../../../common/player/ytPlayer";
 
 
 export const ChapterDetail = () => {
@@ -20,13 +21,13 @@ export const ChapterDetail = () => {
     const [videoCurrentTime, setVideoCurrentTime] = useState(0);
     const nav = useNavigate();
     const [showNotes, setShowNotes] = useState(false)
-    const videoRef = useRef(null);
     const [showAddNote, setShowAddNote] = useState(false);
     const [question, setQuestion] = useState(null)
     const [currentQuestion, setCurrentQuestion] = useState(null);
     const [showQuestion, setShowQuestion] = useState(false);
     const [showCorrectAnswerModal, setShowCorrectAnswerModal] = useState(false);
     const [correctAnswer, setCorrectAnswer] = useState('');
+    const playerRef = useRef(null);
 
 
     const showConfetti = () => {
@@ -47,28 +48,27 @@ export const ChapterDetail = () => {
             loadQuestion()
         }
     }, [chapterid])
+    useEffect(() => {
+        if (!question || !Array.isArray(question)) return;
+
+        const matched = question.find(q =>
+            Math.abs(q.timestamp - videoCurrentTime) < 1 &&
+            q.id !== currentQuestion?.id
+        );
+
+        if (matched) {
+            playerRef.current?.pause();
+            setCurrentQuestion(matched);
+            setShowQuestion(true);
+        }
+    }, [videoCurrentTime, question]);
+
     const loadNotes = async () => {
         try {
             let res = await authAPI().get(endpoints['get_notes'](chapterid))
             setListNotes(res.data)
         } catch (ex) { console.error(ex) }
     }
-    const handleTimeUpdate = (e) => {
-        const currentTime = e.target.currentTime;
-        setVideoCurrentTime(currentTime)
-        const noteToShow = listNotes.find(note => Math.abs(note.timestamp - currentTime) < 2);
-        if (noteToShow && noteToShow !== currentNote) {
-            setCurrentNote(noteToShow);
-        }
-        const questionToShow = question?.find(q => Math.abs(q.timestamp - currentTime) < 2);
-        if (questionToShow && questionToShow !== currentQuestion) {
-            setCurrentQuestion(questionToShow);
-            setShowQuestion(true);
-            if (videoRef.current) {
-                videoRef.current.pause();
-            }
-        }
-    };
 
     const addNote = async () => {
         try {
@@ -99,6 +99,7 @@ export const ChapterDetail = () => {
             loadChapter();
         }
     }, [chapterid]);
+    const videoId = chapter?.chapter?.video;
 
     const payment = async (e) => {
         e.preventDefault()
@@ -137,22 +138,23 @@ export const ChapterDetail = () => {
             console.error(ex);
         }
     };
+    // Notes
     const handleShowNotes = () => setShowNotes(true);
     const handleCloseNotes = () => setShowNotes(false);
     const handleShowAddNote = () => {
-        if (videoRef.current) {
-            videoRef.current.pause();
-        }
+        playerRef.current?.pause();
         setShowAddNote(true);
     };
     const handleCloseAddNote = () => setShowAddNote(false);
 
     const handleNoteClick = (timestamp) => {
-        if (videoRef.current) {
-            videoRef.current.currentTime = timestamp;
+        if (playerRef.current) {
+            playerRef.current.seekTo(timestamp);
         }
         setShowNotes(false);
     };
+
+    // Questtion
     const handleQuestionSubmit = (answerId) => {
         if (currentQuestion.correct_answer === answerId) {
             showConfetti();
@@ -161,8 +163,8 @@ export const ChapterDetail = () => {
             setShowCorrectAnswerModal(true);
         }
         setShowQuestion(false);
-        if (videoRef.current) {
-            videoRef.current.play();
+        if (playerRef.current?.playVideo) {
+            playerRef.current.playVideo();
         }
     };
 
@@ -174,13 +176,11 @@ export const ChapterDetail = () => {
                         chapter.purchase !== null ? (
                             <div>
                                 <div className="video-container">
-                                    <video
-                                        ref={videoRef}
-                                        className="chapter-video"
-                                        src={chapter.chapter.video}
-                                        controls
+                                    <YouTubePlayer
+                                        ref={playerRef}
+                                        videoUrl={chapter.chapter.video}
                                         onEnded={handleProgressClick}
-                                        onTimeUpdate={handleTimeUpdate}
+                                        onTimeUpdate={setVideoCurrentTime}
                                     />
                                     {showQuestion && currentQuestion && (
                                         <div className="overlay">
@@ -244,7 +244,18 @@ export const ChapterDetail = () => {
                                             <Offcanvas.Title>Add Note</Offcanvas.Title>
                                         </Offcanvas.Header>
                                         <Offcanvas.Body>
-                                            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="enter"></input>
+                                            <textarea
+                                                value={note}
+                                                onChange={(e) => setNote(e.target.value)}
+                                                placeholder="Enter your note"
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100px',
+                                                    border: '1px solid #ccc',
+                                                    borderRadius: '5px',
+                                                    resize: 'vertical',
+                                                }}
+                                            />
                                             <Button style={{ backgroundColor: 'black' }} onClick={addNote}>Submit</Button>
                                         </Offcanvas.Body>
                                     </Offcanvas>
@@ -254,7 +265,10 @@ export const ChapterDetail = () => {
 
                         ) : (
                             <div>
-                                <video className="chapter-video" src={chapter.chapter.video} controls onEnded={handleProgressClick} />
+                                <YouTubePlayer
+                                    videoUrl={chapter.chapter.video}
+                                    onEnded={handleProgressClick}
+                                />
                                 <div className="title-and-button">
                                     <h2 className="chapter-title">{chapter.chapter.title}</h2>
                                     <Button type="button" onClick={payment} style={{ backgroundColor: "#211414", color: "white" }}>
@@ -269,9 +283,14 @@ export const ChapterDetail = () => {
                 ) : (
                     <Banner message="Loading..." isSuccess={false} />
                 )}
-                
+
             </div>
-            <GeminiChat/>
+            {videoId && <GeminiChat videoId={videoId} />}
         </div>
     )
+};
+const extractVideoId = (url) => {
+    const regex = /(?:youtube\.com.*(?:\?|&)v=|youtu\.be\/)([^&\n?#]+)/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
 };

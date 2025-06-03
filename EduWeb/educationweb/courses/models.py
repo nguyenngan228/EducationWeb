@@ -1,20 +1,24 @@
-from _ast import mod
-from django.utils import timezone
+from embed_video.fields import EmbedVideoField
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
 
 
+class Qualification(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
 class User(AbstractUser):
     avatar = CloudinaryField('avatar', null=True, blank=True)
     phoneNumber = models.CharField(max_length=255)
     is_teacher = models.BooleanField(default=False)
     is_student = models.BooleanField(default=False)
-    qualification = models.CharField(max_length=200)
+    qualification = models.ForeignKey(Qualification, on_delete=models.CASCADE)
     activate_token = models.UUIDField(default=uuid.uuid4, editable=False, null=True)
     is_active = models.BooleanField(default=True)
-
 
 
 
@@ -81,7 +85,7 @@ class Lesson(models.Model):
 class Chapter(Common):
     course = models.ForeignKey(Course,on_delete=models.CASCADE,related_name='chapters')
     # video = CloudinaryField('video', resource_type='video', null=True, blank=True)
-    video = models.URLField(blank=True, null=True)
+    video = EmbedVideoField(blank=True, null=True)
     position = models.PositiveIntegerField(editable=False)
     is_free = models.BooleanField(default=False)
 

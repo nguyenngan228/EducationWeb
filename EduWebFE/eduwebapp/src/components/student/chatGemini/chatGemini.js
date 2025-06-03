@@ -3,7 +3,7 @@ import { X, MessageCircle } from 'lucide-react';
 import { authAPI, endpoints } from "../../../configs/APIs";
 import { Button } from 'react-bootstrap';
 
-const GeminiChat = () => {
+const GeminiChat = ({videoId}) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -18,14 +18,13 @@ const GeminiChat = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!message.trim()) return;
-
+    
     const newMessage = { sender: 'user', text: message };
     setMessages((prev) => [...prev, newMessage]);
     setMessage('');
     setLoading(true);
-
     try {
-      let res = await authAPI().post(endpoints['chat_gemeni'], { message });
+      let res = await authAPI().post(endpoints['chat_gemeni'], { message,  video_url: videoId });
       const botMessage = { sender: 'bot', text: res.data.response, avatar: 'https://img.freepik.com/free-vector/graident-ai-robot-vectorart_78370-4114.jpg' };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {

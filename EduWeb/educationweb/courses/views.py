@@ -4,19 +4,18 @@ from .models import (Category, Course, Teacher, User,
                      Exam, Chapter, Student, UserProgress,
                      Purchase, StripeCustomer, Rating, Comment,
                      Note, QuizQuestion, QuizAnswer, Question, Answer,
-                     StudentExam, StudentAnswer)
+                     StudentExam, StudentAnswer, Qualification)
 from rest_framework.response import Response
 from courses import serializers, paginators, perms
 from rest_framework.decorators import action
 import stripe
-from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Max, Count
+from django.db.models import Max, Count, Q, Avg
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from .dao import (generate_system_token_for_user, send_activation_email,
                   calculate_review, calculate_student, calculate_average_review, get_analytics,
-                  is_all_chapter_completed)
+                  is_all_chapter_completed, extract_video_id, send_payment_success_email)
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth import get_user_model
 import pandas as pd
@@ -34,7 +33,15 @@ import cloudinary
 from django.utils import timezone
 import logging
 logger = logging.getLogger(__name__)
+from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
+from django.conf import settings
 
+
+
+class QualificationViewSet(viewsets.ViewSet, generics.ListAPIView):
+    queryset = Qualification.objects.all()
+    serializer_class = serializers.QualificationSerializer
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = User.objects.all()
@@ -167,23 +174,27 @@ class UserCourseViewSet(viewsets.ViewSet, generics.ListAPIView):
 
     @action(methods=['get'], detail=False)
     def export_csv(self, request):
-        # Lấy dữ liệu khóa học được xuất ra CSV
-        courses = Course.objects.filter(publish=True).values('id', 'title',
-                                                             'category__title',
-                                                             'price')  # Truy vấn với tên của category
+        import pandas as pd
+        from django.http import HttpResponse
 
-        # Chuyển dữ liệu thành DataFrame của Pandas
+        courses = Course.objects.filter(publish=True).values(
+            'id', 'title', 'category__title', 'price'
+        )
+
         df = pd.DataFrame(courses)
 
-        # Tạo response cho việc xuất dữ liệu CSV
+        # Lấy base URL của frontend từ settings
+        base_url = settings.FRONTEND_BASE_URL  # vd: http://localhost:3000
+
+        # Tạo link FE đến khóa học
+        df['link'] = df['id'].apply(lambda x: f"{base_url}/stuwall/course/{x}")
+
+        # Export
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="coursesAI.csv"'
-
-        # Ghi DataFrame vào response
         df.to_csv(path_or_buf=response, index=False)
 
         return response
-
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.CreateAPIView):
@@ -470,7 +481,7 @@ class ChapterViewSet(viewsets.ViewSet):
                     'description': chapter.description,
                     'position': chapter.position,
                     'is_free': chapter.is_free,
-                    'video': chapter.video.url if chapter.video else None,
+                    'video': chapter.video if chapter.video else None,
                 } if chapter else None
 
                 response_data = {
@@ -806,10 +817,16 @@ class PurchaseViewSet(viewsets.ModelViewSet):
 
         student = get_object_or_404(Student, id=student_id)
 
+        purchased_courses = []
+
         for course_id in course_ids:
             course = get_object_or_404(Course, id=course_id)
             if not Purchase.objects.filter(student=student, course=course).exists():
                 Purchase.objects.create(student=student, course=course)
+                purchased_courses.append(course)
+
+        if purchased_courses:
+            send_payment_success_email(student, purchased_courses)
 
         return Response({'status': 'success', 'course_ids': course_ids})
 
@@ -827,9 +844,35 @@ class GeminiChatViewSet(viewsets.GenericViewSet):
 
     @action(methods=['POST'], detail=False, url_path='chatgemini', serializer_class=serializers.GeminiChatSerializer)
     def chat_gemini(self, request):
+        #serializers dữ liệu đầu vào
         serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        # validate dữ liệu đầu vào
+        message = serializer.validated_data['message']
+        video_url = serializer.validated_data['video_url']
+        # lấy video_id
+        video_id = extract_video_id(video_url)
+        transcript_text = ""
+
+
+        if video_id:
+            try:
+                # Dùng YouTubeTranscriptApi để lấy transcript từ video(nếu có)
+                transcript = YouTubeTranscriptApi.get_transcript(video_id)
+                # gộp lại thành file text
+                transcript_text = " ".join([entry['text'] for entry in transcript])
+            except (TranscriptsDisabled, NoTranscriptFound):
+                transcript_text = ""
+
+        #Tạo prompt gửi đến Gemini
+        prompt = (
+            f"You are a helpful assistant.\n"
+            f"This is the transcript of a lesson video:\n{transcript_text}\n\n"
+            f"User question: {message}\n"
+            f"If the question is related to the video, answer using the transcript.\n"
+            f"If not, answer using your general knowledge.\n"
+            f"Keep the answer concise (3–5 sentences)."
+        )
 
         model = genai.GenerativeModel(
             model_name="gemini-2.0-flash",
@@ -841,15 +884,34 @@ class GeminiChatViewSet(viewsets.GenericViewSet):
                 "response_mime_type": "text/plain",
             },
         )
-        user_input = f"Answer concisely, up to 3-5 sentences. {serializer.validated_data['message']}"
 
-        # Gửi yêu cầu đến Gemini và nhận phản hồi
-        chat_session = model.start_chat(history=[])
-        response = chat_session.send_message(user_input)
-        model_response = response.text
+        chat = model.start_chat(history=[])
+        response = chat.send_message(prompt)
 
-        # Trả về kết quả từ Gemini AI
-        return Response({"response": model_response}, status=status.HTTP_200_OK)
+        return Response({"response": response.text}, status=status.HTTP_200_OK)
+        # serializer = self.get_serializer(data=request.data)
+        # if not serializer.is_valid():
+        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #
+        # model = genai.GenerativeModel(
+        #     model_name="gemini-2.0-flash",
+        #     generation_config={
+        #         "temperature": 0,
+        #         "top_p": 0.95,
+        #         "top_k": 40,
+        #         "max_output_tokens": 500,
+        #         "response_mime_type": "text/plain",
+        #     },
+        # )
+        # user_input = f"Answer concisely, up to 3-5 sentences. {serializer.validated_data['message']}"
+        #
+        # # Gửi yêu cầu đến Gemini và nhận phản hồi
+        # chat_session = model.start_chat(history=[])
+        # response = chat_session.send_message(user_input)
+        # model_response = response.text
+        #
+        # # Trả về kết quả từ Gemini AI
+        # return Response({"response": model_response}, status=status.HTTP_200_OK)
 
 
 class StripeCustomerViewSet(viewsets.ModelViewSet):
@@ -898,69 +960,19 @@ products_df = pd.read_csv('courses.csv')
 
 print(products_df)
 
-# Xây dựng vector đặc trưng TF-IDF từ tên sản phẩm
+# Xây dựng vector đặc trưng TF-IDF từ tên sản phẩm, stop_words='english': loại bỏ các từ thông dụng: the, and of
 tfidf_vectorizer = TfidfVectorizer(stop_words='english', norm='l2')
+# Ma trận có x kích thước
 tfidf_matrix = tfidf_vectorizer.fit_transform(products_df['title'])
 print("Ma trận TF-IDF (đã chuyển thành dạng array):")
 print(tfidf_matrix.toarray())
 
-# Sử dụng cosine similarity để tính độ tương tự giữa các sản phẩm
+# Sử dụng cosine similarity để tính độ tương tự giữa các sản phẩm,
+# kết quả là 1 ma trận vuông, consine_sim[i][j] thể hiện mức độ tương đồng giữa [i] và [j]
 cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
 print("\nMa trận Cosine Similarity (5 sản phẩm đầu tiên):")
 print(cosine_sim[:5, :5])  # In ra ma trận tương tự cho 5 sản phẩm đầu tiên
-# Lấy tên đặc trưng (từ vựng)
-# feature_names = tfidf_vectorizer.get_feature_names_out()
-# tfidf_array = tfidf_matrix.toarray()
-#
-# # Chọn từ khóa có giá trị TF-IDF cao nhất cho mỗi khóa học (5 khóa học đầu tiên)
-# top_keywords = []
-# keyword_indices = []
-# for i in range(5):  # Lấy 5 khóa học đầu tiên
-#     # Lấy chỉ số của từ có giá trị TF-IDF cao nhất cho khóa học i
-#     top_idx = np.argsort(tfidf_array[i])[::-1][0]  # Lấy 1 từ khóa quan trọng nhất
-#     keyword = feature_names[top_idx]
-#     # Kiểm tra để tránh trùng từ khóa
-#     if keyword not in top_keywords:
-#         top_keywords.append(keyword)
-#         keyword_indices.append(top_idx)
-#     else:
-#         # Nếu từ khóa trùng, lấy từ khóa có giá trị TF-IDF cao thứ hai
-#         top_idx = np.argsort(tfidf_array[i])[::-1][1]
-#         keyword = feature_names[top_idx]
-#         top_keywords.append(keyword)
-#         keyword_indices.append(top_idx)
-#
-# # Tạo ma trận TF-IDF cho 5 khóa học với các từ khóa đã chọn
-# selected_tfidf = tfidf_array[:5, keyword_indices]
-# tfidf_df = pd.DataFrame(
-#     selected_tfidf,  # Ma trận 5x5 (5 khóa học, 5 từ khóa)
-#     columns=top_keywords,  # Tên cột là các từ khóa
-#     index=products_df['title'][:5]  # Tên dòng là tên khóa học
-# )
-#
-# # In ma trận TF-IDF
-# print("\nMa trận TF-IDF (5 khóa học đầu tiên, từ khóa quan trọng nhất của mỗi khóa):")
-# print(tfidf_df.round(3).to_string())
-#
-# # Tính cosine similarity
-# cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
-#
-# # In ma trận Cosine Similarity
-# print("\nMa trận Cosine Similarity (5 khóa học đầu tiên):")
-# cosine_df = pd.DataFrame(
-#     cosine_sim[:5, :5],
-#     columns=products_df['title'][:5],
-#     index=products_df['title'][:5]
-# )
-# print(cosine_df.round(3).to_string())
-#
-# # Lưu kết quả ra file
-# output_dir = 'D:/'  # Lưu vào thư mục làm việc hiện tại
-# print(f"\nCác file CSV được lưu tại: {output_dir}")
-# print(f"\nCác file CSV được lưu tại: {output_dir}")
-# products_df.head().to_csv(os.path.join(output_dir, 'products_head.csv'), index=False)
-# tfidf_df.to_csv(os.path.join(output_dir, 'tfidf_matrix.csv'))
-# cosine_df.to_csv(os.path.join(output_dir, 'cosine_similarity.csv'))
+
 
 
 class RecommenViewset(viewsets.ViewSet, generics.ListAPIView):
@@ -970,58 +982,94 @@ class RecommenViewset(viewsets.ViewSet, generics.ListAPIView):
     @action(methods=['post'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def course_recommend(self, request):
         try:
+            user = request.user
+            if not hasattr(user, 'student'):
+                return Response({'error': 'Người dùng không phải là học viên'}, status=status.HTTP_400_BAD_REQUEST)
+
+            student = user.student
             data = request.data
+            #Gửi id khóa học mà user đang xem
             product_id = data.get('product_id')
 
             if not product_id or not str(product_id).isdigit():
-                return Response({'error': 'Thiếu thông tin sản phẩm hoặc ID không hợp lệ'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Thiếu hoặc ID sản phẩm không hợp lệ'}, status=status.HTTP_400_BAD_REQUEST)
 
             product_id = int(product_id)
-            print(product_id)
 
-            # Tìm chỉ mục của sản phẩm tương ứng với product_id
+            # === [1] Lấy index TF-IDF ===
+            # Lấy vị trí khóa học trong data frame và tính độ tương đồng(dùng để tra IF-IDF)
             product_index = products_df[products_df['id'] == product_id].index
-
             if product_index.empty:
-                return Response({'error': 'Không tìm thấy sản phẩm'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'error': 'Không tìm thấy khóa học'}, status=status.HTTP_404_NOT_FOUND)
+            product_index = product_index[0]
 
-            product_index = product_index[0]  # Lấy chỉ mục đầu tiên
-
+            # === [2] Tính độ tương đồng TF-IDF ===
+            # Dựa vào consine sim, tìm khóa học có độ tương đồng cao nhất với product_id
             similar_scores = list(enumerate(cosine_sim[product_index]))
             similar_scores = sorted(similar_scores, key=lambda x: x[1], reverse=True)
-            similar_scores = [score for score in similar_scores if score[1] > 0 and products_df.iloc[score[0]][
-                'id'] != product_id]  # Thử lấy 7 sản phẩm tương tự nhất
-            if len(similar_scores) == 0.0:
-                # Nếu không có sản phẩm tương tự, lấy sản phẩm trong cùng danh mục
-                category_title = products_df.iloc[product_index]['category__title']
-                same_category_products = products_df[
-                    (products_df['category__title'] == category_title) & (products_df['id'] != product_id)]
-                recommended_products = same_category_products['id'].tolist()
+            # Loại bỏ chính nó (product_id) ra khỏi danh sách
+            similar_scores = [score for score in similar_scores if
+                              score[1] > 0 and products_df.iloc[score[0]]['id'] != product_id]
+            # lưu dsach khóa học vào recommended_ids_by_tfidf
+            recommended_ids_by_tfidf = [int(products_df.iloc[i[0]]['id']) for i in similar_scores]
 
-                queryset = Course.objects.filter(id__in=recommended_products)
-                serializer = self.get_serializer(queryset, many=True)
-                return Response(serializer.data)
+            # === [3] Lấy các khóa học đã tương tác (mua, đánh giá, bình luận)
+            purchased_ids = Purchase.objects.filter(student=student).values_list('course_id', flat=True)
+            rated_ids = Rating.objects.filter(student=student).values_list('course_id', flat=True)
+            commented_ids = Comment.objects.filter(student=student).values_list('course_id', flat=True)
+            # Hợp nhất lại thành interacted_ids, tránh các khóa học đã xem rồi
+            interacted_ids = set(purchased_ids) | set(rated_ids) | set(commented_ids)
 
-            product_indices = [i[0] for i in similar_scores]
+            # === [4] Gợi ý khóa học
+            recommended_ids = []
 
-            # Trả về danh sách các sản phẩm tương tự
-            recommended_products = products_df.loc[product_indices, ['id', 'title']]
-            recommended_products_ids = products_df.loc[product_indices, 'id'].tolist()
+            if interacted_ids:
+                # === [4.1] Ưu tiên khóa học TF-IDF(đã đưa vào) nhưng chưa tương tác
+                for course_id in recommended_ids_by_tfidf:
+                    if course_id not in interacted_ids:
+                        recommended_ids.append(course_id)
+                    if len(recommended_ids) >= 10: #lấy tối đa 10 khóa học
+                        break
+            else:
+                # === [4.2] Nếu user chưa tương tác: gợi ý theo thông tin hồ sơ
+                cate_filter = Q()
+                if student.interesting_cate:
+                    cate_titles = [title.strip() for title in student.interesting_cate.split(',')]
+                    cate_filter |= Q(category__title__in=cate_titles)
 
-            # Kiểm tra kiểu dữ liệu id để đảm bảo là số nguyên
-            recommended_products_ids = [int(id) for id in recommended_products_ids]
+                level_filter = Q()
+                if user.qualification:
+                    q = user.qualification.lower()
+                    if "sinh viên" in q:
+                        level_filter |= Q(title__icontains="sinh viên") | Q(description__icontains="sinh viên")
+                    elif "học sinh" in q:
+                        level_filter |= Q(title__icontains="cơ bản") | Q(description__icontains="lớp")
+                    elif "thạc sĩ" in q:
+                        level_filter |= Q(title__icontains="nâng cao") | Q(description__icontains="chuyên sâu")
 
-            queryset = Course.objects.filter(id__in=recommended_products_ids)
+                fallback_courses = Course.objects.filter(cate_filter | level_filter).distinct()[:10]
+                recommended_ids = [c.id for c in fallback_courses]
 
-            # Sử dụng UserCourseSerializer để tuần tự hóa các sản phẩm
+            # === [5] DEBUG LOG cho báo cáo hoặc kiểm tra
+            print("=== [RECOMMENDER DEBUG] ===")
+            print(f"[1] User: {user.username} - Qualification: {user.qualification}")
+            print(f"[2] Student Interested Categories: {student.interesting_cate}")
+            print(f"[3] Product ID input: {product_id}")
+            print(f"[4] Purchased: {list(purchased_ids)}")
+            print(f"[5] Rated: {list(rated_ids)}")
+            print(f"[6] Commented: {list(commented_ids)}")
+            print(f"[7] Interacted Course IDs: {list(interacted_ids)}")
+            print(f"[8] TF-IDF Recommended IDs: {recommended_ids_by_tfidf[:10]}")
+            print(f"[9] Final Recommended IDs: {recommended_ids}")
+            print("============================")
+
+            # === [6] Serialize và trả về
+            queryset = Course.objects.filter(id__in=recommended_ids)
             serializer = self.get_serializer(queryset, many=True)
-
-            # Trả về danh sách các sản phẩm đã được tuần tự hóa
             return Response(serializer.data)
 
         except Exception as e:
-            return Response({'error': 'Có lỗi xảy ra: ' + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': 'Đã xảy ra lỗi: ' + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CourseExamViewSet(viewsets.GenericViewSet):

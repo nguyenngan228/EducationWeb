@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { Container, Row, Col, Button, Form } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./signup.css";
@@ -46,11 +46,6 @@ const SignUpTeacher = () => {
       type: "text",
       field: "phoneNumber",
     },
-    {
-      label: "Qualification",
-      type: "text",
-      field: "qualification",
-    },
   ];
 
   const [muUser, dispatch] = useContext(mycontext);
@@ -59,6 +54,8 @@ const SignUpTeacher = () => {
   const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
+  const [qualifications, setQualifications] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [modalProps, setModalProps] = useState({
     title: "",
     message: "",
@@ -98,10 +95,22 @@ const SignUpTeacher = () => {
       return { ...current, [field]: e.target.value };
     });
   };
+  const get_qualifications = async () => {
+    try {
+      let res = await APIs.get(endpoints["qualification"]);
+      setQualifications(res.data);
+    } catch (error) {
+      console.error("Failed to fetch qualifications", error);
+    }
+  }
+  useEffect(() => {
+    get_qualifications();
+  }, []);
 
   const register = async (e) => {
     e.preventDefault();
     if (validateForm()) {
+      setLoading(true);
       let form = new FormData();
       for (let key in user) if (key !== "confirm") form.append(key, user[key]);
       if (avatar?.current?.files?.[0]) {
@@ -119,6 +128,8 @@ const SignUpTeacher = () => {
         navigate("/login");
       } catch (ex) {
         console.error(ex);
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -210,14 +221,33 @@ const SignUpTeacher = () => {
                   ref={avatar}
                 />
               </Form.Group>
+              <Form.Group className="mb-3" controlId="qualification">
+                <Form.Label className="form-label">Qualification</Form.Label>
+                <Form.Select
+                  onChange={(e) => change(e, "qualification")}
+                  value={user.qualification || ""}
+                  isInvalid={!!errors.qualification}
+                >
+                  <option value="">-- Select Qualification --</option>
+                  {qualifications?.map((q) => (
+                    <option key={q.id} value={q.id}>{q.name}</option>
+                  ))}
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {errors.qualification}
+                </Form.Control.Feedback>
+              </Form.Group>
+
               <Button
                 onClick={register}
                 style={{ backgroundColor: "#0000FF" }}
                 type="submit"
                 className="w-100 mt-3"
+                disabled={loading}
               >
-                Continue
+                {loading ? "Loading..." : "Continue"}
               </Button>
+
             </Form>
             <div
               className="text-center mt-3"

@@ -97,15 +97,22 @@ def generate_system_token_for_user(user):
     }
 
 def send_activation_email(user, request):
+    # Lấy domain hiện tại của trang web
     current_site = get_current_site(request)
+
+    #Tạo tiêu đề và đường dẫn kích hoạt
     mail_subject = 'Activate your account'
     activation_link = f"http://{current_site.domain}{reverse('users-activate')}?token={user.activate_token}"
     print(f"Activation link: {activation_link}")
+
+    #render nội dung template mail
     message = render_to_string('activation_email.html', {
         'user': user,
         'activation_link': activation_link,
     })
+    # strip_tag tạo mail chỉ có text, dành cho client không hỗ trợ html
     plain_message = strip_tags(message)
+
     send_mail(
         mail_subject,
         plain_message,
@@ -114,6 +121,27 @@ def send_activation_email(user, request):
         fail_silently=False,
         html_message=message,
     )
+
+
+def send_payment_success_email(student, courses):
+    subject = 'Confirm successful course payment'
+
+    html_message = render_to_string('payment_success_email.html', {
+        'student': student,
+        'courses': courses,
+    })
+
+    plain_message = strip_tags(html_message)
+
+    send_mail(
+        subject,
+        plain_message,
+        settings.DEFAULT_FROM_EMAIL,
+        [student.user.email],
+        fail_silently=False,
+        html_message=html_message,
+    )
+
 
 def is_all_chapter_completed(student, course):
     total_chapters = course.chapters.count()
@@ -124,3 +152,9 @@ def is_all_chapter_completed(student, course):
     ).count()
     return total_chapters > 0 and completed_chapters == total_chapters
 
+
+#tách video_id từ URL youtube
+def extract_video_id(url):
+    import re
+    match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11}).*", url)
+    return match.group(1) if match else None
